@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level width="480" height="800" vertices="4">	
+    
+    <entity x="80" y="100" z="0" type="platform"/>
+    <entity x="400" y="100" z="0" type="platform"/>
+    <entity x="400" y="700" z="0" type="platform"/>
+    <entity x="80" y="700" z="0" type="platform"/>
+    
+	<entity x="140" y="500" type="player1"/>
+	<entity x="240" y="500" type="player1"/>
+	<entity x="340" y="500" type="player1"/>
+	
+	<entity x="140" y="300" type="player2"/>
+	<entity x="240" y="300" type="player2"/>
+	<entity x="340" y="300" type="player2"/>
+
+
+</level>
+
+			
