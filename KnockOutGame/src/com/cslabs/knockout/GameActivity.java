@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -23,11 +24,11 @@ public class GameActivity extends BaseGameActivity {
 
 	public Scene mScene;
 	
-	private ZoomCamera camera;
+	private SmoothCamera camera;
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		camera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, 1000, 1000, 1);
 		IResolutionPolicy resolutionPolicy = new FillResolutionPolicy();
 		EngineOptions engineOptions = new EngineOptions(true,
 				ScreenOrientation.PORTRAIT_FIXED, resolutionPolicy, camera);

@@ -1,7 +1,9 @@
 package com.cslabs.knockout.entity;
 
+import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.debug.Debug;
 
 import com.badlogic.gdx.math.Vector2;
@@ -59,6 +61,31 @@ public class Utils {
 		final Vector2 velocity = new Vector2(Vx, Vy);
 
 		return velocity;
+	}
+	
+	public static boolean isFingerAtEdgeofScreen(final TouchEvent pSceneTouchEvent, final ZoomCamera camera) {
+		
+		// Constants
+		final float edge = 0.08f;	// percent of the screen that is considered near the edge
+		
+		// Variables
+		float currentZoom, camCenterX, camCenterY;
+		float X1, Y1, X, Y, x, y;
+		
+		currentZoom = camera.getZoomFactor();
+		camCenterX = camera.getCenterX();
+		camCenterY = camera.getCenterY();
+		X = camera.getWidth();
+		Y = camera.getHeight();
+		x = pSceneTouchEvent.getX();
+		y = pSceneTouchEvent.getY();
+		X1 = camCenterX - X / 2;
+		Y1 = camCenterY - Y / 2;
+		
+		if((x > X1 && x < X1 + edge * X) || (x > X1 + (1 - edge) * X && x < X1 + X)) {
+			return true;
+		}		
+		return false;
 	}
 
 }

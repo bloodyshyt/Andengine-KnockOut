@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.IEntity;
@@ -69,8 +70,9 @@ import com.cslabs.knockout.factory.PlatformFactory;
 import com.cslabs.knockout.factory.CheckerFactory;
 import com.cslabs.knockout.utils.Stopwatch;
 
-public class GameScene extends AbstractScene implements IOnAreaTouchListener, IOnSceneTouchListener, IScrollDetectorListener,
-IPinchZoomDetectorListener {
+public class GameScene extends AbstractScene implements IOnAreaTouchListener,
+		IOnSceneTouchListener, IScrollDetectorListener,
+		IPinchZoomDetectorListener {
 
 	private static final String TAG = "GameScene";
 
@@ -120,14 +122,14 @@ IPinchZoomDetectorListener {
 	public static Rectangle center;
 
 	Iterator<Body> bodies;
-	
-	// Variables for zoom camera
+
+	// Variables for zoom/smooth camera
 	private static final float MIN_ZOOM_FACTOR = 0.5f;
 	private static final float MAX_ZOOM_FACTOR = 1.5f;
 	private SurfaceScrollDetector mScrollDetector;
 	private PinchZoomDetector mPinchZoomDetector;
 	private float mPinchZoomStartedCameraZoomFactor;
-	private ZoomCamera mZoomCamera;
+	private SmoothCamera mSmoothCamera;
 
 	static Text turnText, p1, p2;
 
@@ -166,7 +168,7 @@ IPinchZoomDetectorListener {
 				false, 6, 2);
 		CheckerFactory.getInstance().create(physicsWorld, vbom);
 		PlatformFactory.getInstance().create(physicsWorld, vbom);
-		mZoomCamera = (ZoomCamera) ResourceManager.getInstance().camera; 
+		mSmoothCamera = (SmoothCamera) ResourceManager.getInstance().camera;
 
 	}
 
@@ -190,13 +192,13 @@ IPinchZoomDetectorListener {
 				"It is Player 1's turn", vbom);
 		attachChild(turnText);
 
-//		p1 = new Text(400, 750, ResourceManager.getInstance().mFont, "P1: "
-//				+ P1_lives, vbom);
-//		attachChild(p1);
-//
-//		p2 = new Text(400, 50, ResourceManager.getInstance().mFont, "P2: "
-//				+ P2_lives, vbom);
-//		attachChild(p2);
+		// p1 = new Text(400, 750, ResourceManager.getInstance().mFont, "P1: "
+		// + P1_lives, vbom);
+		// attachChild(p1);
+		//
+		// p2 = new Text(400, 50, ResourceManager.getInstance().mFont, "P2: "
+		// + P2_lives, vbom);
+		// attachChild(p2);
 
 		// update handler to check if all the pieces are stationary
 		registerUpdateHandler(new IUpdateHandler() {
@@ -224,10 +226,9 @@ IPinchZoomDetectorListener {
 					turnText.setText("Please wait");
 				} else {
 
-					 if (!botThreadRunning && pieces.size() > 0) {
-					 Debug.i(TAG, "Calling AIBot for " + currentState);
-					// new Thread(AIBot).start();
-					 }
+					if (!botThreadRunning && pieces.size() > 0) {
+						// new Thread(AIBot).start();
+					}
 				}
 			}
 		});
@@ -235,7 +236,7 @@ IPinchZoomDetectorListener {
 		setTouchAreaBindingOnActionDownEnabled(true);
 		createVisualAids();
 		setOnAreaTouchListener(this);
-		
+
 		this.mScrollDetector = new SurfaceScrollDetector(this);
 		this.mPinchZoomDetector = new PinchZoomDetector(this);
 
@@ -248,44 +249,44 @@ IPinchZoomDetectorListener {
 		// currentState = currentState.createGameState(this);
 		// Shot shot = greedyBot.findBestShot(currentState, 1);
 		// playShot(shot);
-		
+
 		// test the evaluate function
-		//float score = greedyBot.evaluateShot(currentState, new Shot(101, new Vector2(0, -40)), PlayerNo.P1);
-		//Debug.i(TAG, "testing shot has a score of " + score);
-		
-		//playShot(new Shot(101, new Vector2(0, -40)));
-		
+		// float score = greedyBot.evaluateShot(currentState, new Shot(101, new
+		// Vector2(0, -40)), PlayerNo.P1);
+		// Debug.i(TAG, "testing shot has a score of " + score);
+
+		// playShot(new Shot(101, new Vector2(0, -40)));
 
 	}
-	
+
 	@Override
 	public void onScrollStarted(final ScrollDetector pScollDetector,
 			final int pPointerID, final float pDistanceX, final float pDistanceY) {
-		final float zoomFactor = this.mZoomCamera.getZoomFactor();
-		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+		final float zoomFactor = this.mSmoothCamera.getZoomFactor();
+		this.mSmoothCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
 				/ zoomFactor);
 	}
 
 	@Override
 	public void onScroll(final ScrollDetector pScollDetector,
 			final int pPointerID, final float pDistanceX, final float pDistanceY) {
-		final float zoomFactor = this.mZoomCamera.getZoomFactor();
-		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+		final float zoomFactor = this.mSmoothCamera.getZoomFactor();
+		this.mSmoothCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
 				/ zoomFactor);
 	}
 
 	@Override
 	public void onScrollFinished(final ScrollDetector pScollDetector,
 			final int pPointerID, final float pDistanceX, final float pDistanceY) {
-		final float zoomFactor = this.mZoomCamera.getZoomFactor();
-		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+		final float zoomFactor = this.mSmoothCamera.getZoomFactor();
+		this.mSmoothCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
 				/ zoomFactor);
 	}
 
 	@Override
 	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector,
 			final TouchEvent pTouchEvent) {
-		this.mPinchZoomStartedCameraZoomFactor = this.mZoomCamera
+		this.mPinchZoomStartedCameraZoomFactor = this.mSmoothCamera
 				.getZoomFactor();
 	}
 
@@ -293,31 +294,42 @@ IPinchZoomDetectorListener {
 	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector,
 			final TouchEvent pTouchEvent, final float pZoomFactor) {
 		// If the camera is within zooming bounds
-		final float newZoomFactor = mPinchZoomStartedCameraZoomFactor * pZoomFactor;
-				if(newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR){
-					this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
-				* pZoomFactor);
-				}
-		
+		final float newZoomFactor = mPinchZoomStartedCameraZoomFactor
+				* pZoomFactor;
+		if (newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR) {
+			this.mSmoothCamera
+					.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
+							* pZoomFactor);
+		}
+
 	}
 
 	@Override
 	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector,
 			final TouchEvent pTouchEvent, final float pZoomFactor) {
-		// Set the zoom factor one last time upon ending the pinch-to-zoom functionality
-				final float newZoomFactor = mPinchZoomStartedCameraZoomFactor * pZoomFactor;
-				
-				// If the camera is within zooming bounds
-				if(newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR){
-					// Set the new zoom factor
-					this.mZoomCamera.setZoomFactor(newZoomFactor);
-				}
+		// Set the zoom factor one last time upon ending the pinch-to-zoom
+		// functionality
+		final float newZoomFactor = mPinchZoomStartedCameraZoomFactor
+				* pZoomFactor;
+
+		// If the camera is within zooming bounds
+		if (newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR) {
+			// Set the new zoom factor
+			this.mSmoothCamera.setZoomFactor(newZoomFactor);
+		}
 	}
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene,
 			final TouchEvent pSceneTouchEvent) {
-		Debug.i(TAG, "X:" + pSceneTouchEvent.getX() + " Y:" + pSceneTouchEvent.getY());
+		Debug.i(TAG,
+				"X:" + pSceneTouchEvent.getX() + " Y:"
+						+ pSceneTouchEvent.getY() + " zoom:"
+						+ mSmoothCamera.getZoomFactor());
+		Debug.i(TAG, "Camera center: X:" + mSmoothCamera.getCenterX() + " Y:"
+				+ mSmoothCamera.getCenterY());
+		Debug.i(TAG, "Camera bounds: Height:" + mSmoothCamera.getHeight()
+				+ "Width:" + mSmoothCamera.getWidth());
 		this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
 
 		if (this.mPinchZoomDetector.isZooming()) {
@@ -340,7 +352,7 @@ IPinchZoomDetectorListener {
 			Stopwatch timer = new Stopwatch();
 			Shot shot = greedyBot.findBestShot(currentState,
 					GameScene.currentState.turn());
-			if(shot != null){
+			if (shot != null) {
 				shot.dumpInfo();
 				playShot(shot);
 			}
@@ -415,6 +427,7 @@ IPinchZoomDetectorListener {
 
 		if (pSceneTouchEvent.isActionDown()) {
 			// Debug.i(TAG, "Checker touched");
+			mPinchZoomStartedCameraZoomFactor = this.mSmoothCamera.getZoomFactor();
 			c.setVisible(false);
 		}
 
@@ -425,8 +438,17 @@ IPinchZoomDetectorListener {
 			distance = Utils.calculateDistance(x1, y1, x2, y2);
 			float pullBackAngle = MathUtils.atan2(y2 - y1, x2 - x1);
 			degree = (float) (pullBackAngle + Math.PI);
-			Debug.i(TAG, "pullBackAngle is " + pullBackAngle
-					+ " firing degree is " + degree);
+			// Debug.i(TAG, "pullBackAngle is " + pullBackAngle
+			// + " firing degree is " + degree);
+			if (Utils.isFingerAtEdgeofScreen(pSceneTouchEvent, mSmoothCamera)) {
+				// slowly zoom out
+				float currentZoomFactor = this.mSmoothCamera
+						.getZoomFactor();
+				final float newZoomFactor = (float) (currentZoomFactor * 0.95);
+				if (newZoomFactor > 0.8) {
+					this.mSmoothCamera.setZoomFactor(newZoomFactor);
+				}
+			}
 		}
 
 		if (pSceneTouchEvent.isActionUp()) {
@@ -442,6 +464,9 @@ IPinchZoomDetectorListener {
 			c.setVisible(true);
 			// c.flick(shot);
 			updateState();
+			
+			// restore the original level of zoom
+			this.mSmoothCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor);
 
 		}
 		return true;
@@ -675,26 +700,28 @@ IPinchZoomDetectorListener {
 	}
 
 	public void updateP1Text() {
-//		ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable() {
-//
-//			@Override
-//			public void run() {
-//				P1_lives--;
-//				Debug.i("P1 lost one, it has " + P1_lives + " left");
-//				p1.setText("P1: " + P1_lives);
-//			}
-//		});
+		// ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable()
+		// {
+		//
+		// @Override
+		// public void run() {
+		// P1_lives--;
+		// Debug.i("P1 lost one, it has " + P1_lives + " left");
+		// p1.setText("P1: " + P1_lives);
+		// }
+		// });
 	}
 
 	public void updateP2Text() {
-//		ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable() {
-//
-//			@Override
-//			public void run() {
-//				P2_lives--;
-//				GameScene.getInstance().p2.setText("P2: " + P2_lives);
-//			}
-//		});
+		// ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable()
+		// {
+		//
+		// @Override
+		// public void run() {
+		// P2_lives--;
+		// GameScene.getInstance().p2.setText("P2: " + P2_lives);
+		// }
+		// });
 	}
 
 	// Getters and Setters
