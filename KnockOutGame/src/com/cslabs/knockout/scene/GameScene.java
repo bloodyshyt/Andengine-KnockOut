@@ -543,7 +543,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		tempPiece.setVisible(true);
 		line.setVisible(true);
 		arrow.setVisible(true);
-	}
+	} 
 
 	public void clearVisualAids() {
 		tempPiece1.setVisible(false);
