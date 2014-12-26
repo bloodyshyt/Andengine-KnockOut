@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
@@ -12,12 +13,7 @@ import org.andengine.engine.options.resolutionpolicy.IResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.debug.Debug;
-import org.xml.sax.SAXException;
 
-import android.content.Context;
-
-import com.cslabs.knockout.entity.Checker;
-import com.cslabs.knockout.factory.CheckerFactory;
 import com.cslabs.knockout.scene.GameScene;
 
 public class GameActivity extends BaseGameActivity {
@@ -26,17 +22,12 @@ public class GameActivity extends BaseGameActivity {
 	public static final int CAMERA_HEIGHT = 800;
 
 	public Scene mScene;
-
-	//public Context context;
-
-	private ArrayList<Checker> pieces = new ArrayList<Checker>();
-
-	private int[][] coordinates = { { 100, 600 }, { 200, 600 }, { 300, 600 },
-			{ 100, 200 }, { 200, 200 }, { 300, 200 }, };
+	
+	private ZoomCamera camera;
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		camera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 		IResolutionPolicy resolutionPolicy = new FillResolutionPolicy();
 		EngineOptions engineOptions = new EngineOptions(true,
 				ScreenOrientation.PORTRAIT_FIXED, resolutionPolicy, camera);

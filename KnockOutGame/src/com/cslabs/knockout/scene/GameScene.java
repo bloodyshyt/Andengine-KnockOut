@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.IEntity;
 import org.andengine.entity.primitive.Line;
@@ -24,6 +25,11 @@ import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.input.touch.detector.PinchZoomDetector;
+import org.andengine.input.touch.detector.ScrollDetector;
+import org.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
+import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
 import org.andengine.util.SAXUtils;
@@ -63,7 +69,8 @@ import com.cslabs.knockout.factory.PlatformFactory;
 import com.cslabs.knockout.factory.CheckerFactory;
 import com.cslabs.knockout.utils.Stopwatch;
 
-public class GameScene extends AbstractScene implements IOnAreaTouchListener {
+public class GameScene extends AbstractScene implements IOnAreaTouchListener, IOnSceneTouchListener, IScrollDetectorListener,
+IPinchZoomDetectorListener {
 
 	private static final String TAG = "GameScene";
 
@@ -113,6 +120,14 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 	public static Rectangle center;
 
 	Iterator<Body> bodies;
+	
+	// Variables for zoom camera
+	private static final float MIN_ZOOM_FACTOR = 0.5f;
+	private static final float MAX_ZOOM_FACTOR = 1.5f;
+	private SurfaceScrollDetector mScrollDetector;
+	private PinchZoomDetector mPinchZoomDetector;
+	private float mPinchZoomStartedCameraZoomFactor;
+	private ZoomCamera mZoomCamera;
 
 	static Text turnText, p1, p2;
 
@@ -151,6 +166,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 				false, 6, 2);
 		CheckerFactory.getInstance().create(physicsWorld, vbom);
 		PlatformFactory.getInstance().create(physicsWorld, vbom);
+		mZoomCamera = (ZoomCamera) ResourceManager.getInstance().camera; 
 
 	}
 
@@ -210,7 +226,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 
 					 if (!botThreadRunning && pieces.size() > 0) {
 					 Debug.i(TAG, "Calling AIBot for " + currentState);
-					 new Thread(AIBot).start();
+					// new Thread(AIBot).start();
 					 }
 				}
 			}
@@ -219,6 +235,12 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 		setTouchAreaBindingOnActionDownEnabled(true);
 		createVisualAids();
 		setOnAreaTouchListener(this);
+		
+		this.mScrollDetector = new SurfaceScrollDetector(this);
+		this.mPinchZoomDetector = new PinchZoomDetector(this);
+
+		this.setOnSceneTouchListener(this);
+		this.setTouchAreaBindingOnActionDownEnabled(true);
 
 		// test the AI
 		// greedyBot = GreedyBot.getInstance();
@@ -234,6 +256,80 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 		//playShot(new Shot(101, new Vector2(0, -40)));
 		
 
+	}
+	
+	@Override
+	public void onScrollStarted(final ScrollDetector pScollDetector,
+			final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+				/ zoomFactor);
+	}
+
+	@Override
+	public void onScroll(final ScrollDetector pScollDetector,
+			final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+				/ zoomFactor);
+	}
+
+	@Override
+	public void onScrollFinished(final ScrollDetector pScollDetector,
+			final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, pDistanceY
+				/ zoomFactor);
+	}
+
+	@Override
+	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector,
+			final TouchEvent pTouchEvent) {
+		this.mPinchZoomStartedCameraZoomFactor = this.mZoomCamera
+				.getZoomFactor();
+	}
+
+	@Override
+	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector,
+			final TouchEvent pTouchEvent, final float pZoomFactor) {
+		// If the camera is within zooming bounds
+		final float newZoomFactor = mPinchZoomStartedCameraZoomFactor * pZoomFactor;
+				if(newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR){
+					this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
+				* pZoomFactor);
+				}
+		
+	}
+
+	@Override
+	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector,
+			final TouchEvent pTouchEvent, final float pZoomFactor) {
+		// Set the zoom factor one last time upon ending the pinch-to-zoom functionality
+				final float newZoomFactor = mPinchZoomStartedCameraZoomFactor * pZoomFactor;
+				
+				// If the camera is within zooming bounds
+				if(newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR){
+					// Set the new zoom factor
+					this.mZoomCamera.setZoomFactor(newZoomFactor);
+				}
+	}
+
+	@Override
+	public boolean onSceneTouchEvent(final Scene pScene,
+			final TouchEvent pSceneTouchEvent) {
+		Debug.i(TAG, "X:" + pSceneTouchEvent.getX() + " Y:" + pSceneTouchEvent.getY());
+		this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+
+		if (this.mPinchZoomDetector.isZooming()) {
+			this.mScrollDetector.setEnabled(false);
+		} else {
+			if (pSceneTouchEvent.isActionDown()) {
+				this.mScrollDetector.setEnabled(true);
+			}
+			this.mScrollDetector.onTouchEvent(pSceneTouchEvent);
+		}
+
+		return true;
 	}
 
 	private Runnable AIBot = new Runnable() {
@@ -416,7 +512,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener {
 		tempPiece.setPosition(Tx, Ty);
 		arrow.setPosition(Ax, Ay);
 		arrow.setRotation(MathUtils
-				.radToDeg((float) (degree - 3 * Math.PI / 4)));
+				.radToDeg((float) (degree + 1 * Math.PI / 4)));
 
 		center.setVisible(true);
 		tempPiece.setVisible(true);
