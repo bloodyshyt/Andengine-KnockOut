@@ -87,7 +87,6 @@ public class GameState extends FixedStepPhysicsWorld {
 		// Obtain bodies from world
 		checkers = scene.getPieces();
 		platform = scene.getPlatform();
-		platform_cords = scene.getPlatform_cords();
 
 		// Add bodies
 		for (Checker c : checkers) {

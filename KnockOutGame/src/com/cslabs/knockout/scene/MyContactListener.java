@@ -44,9 +44,6 @@ public class MyContactListener implements ContactListener {
 				Checker ceB = (Checker) contact.getFixtureB()
 						.getBody().getUserData();
 				if (ceB.getID() == p.getID()) {
-					//Debug.i("Piece " + p.getID() + " is fucking dead");
-					if(p.getPlayer() == PlayerNo.P1) GameScene.getInstance().updateP1Text();
-					if(p.getPlayer() == PlayerNo.P1) GameScene.getInstance().updateP2Text();
 					p.die();
 				}
 			}

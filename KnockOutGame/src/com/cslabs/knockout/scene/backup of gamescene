@@ -94,13 +94,35 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private static final int CAMERA_HEIGHT = 800;
 	private static final int CAMERA_WIDTH = 480;
 
+	// XML related constants
+	private static final String TAG_ENTITY = "entity";
+	private static final String TAG_LEVEL_VERTICES = "vertices";
+
+	private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
+	private static final String TAG_ENTITY_ATTRIBUTE_Y = "y";
+	private static final String TAG_ENTITY_ATTRIBUTE_Z = "z";
+	private static final String TAG_ENTITY_ATTRIBUTE_TYPE = "type";
+
+	private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER1 = "player1";
+	private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER2 = "player2";
+	private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM = "platform";
+
 	// Variables for platform
 	private static Platform platform;
+	private int vertices;
+	private ArrayList<Float> float_platform_coords = new ArrayList<Float>();
+	private static float[] platform_cords;
+	private int vertice_counter = 0;
 
 	// Variables for Checkers and corresponding dots
 	public static LinkedList<Checker> pieces = new LinkedList<Checker>();
 	private static LinkedList<Rectangle> dots = new LinkedList<Rectangle>();
 
+	private int P1_counter = 101;
+	private int P2_counter = 201;
+
+	private static int P1_lives = 0;
+	private static int P2_lives = 0;
 
 	// Variables for visual aids when placing shot
 	float distance = 0, degree = 0;
@@ -177,6 +199,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				"It is Player 1's turn", vbom);
 		attachChild(turnText);
 
+		// p1 = new Text(400, 750, ResourceManager.getInstance().mFont, "P1: "
+		// + P1_lives, vbom);
+		// attachChild(p1);
+		//
+		// p2 = new Text(400, 50, ResourceManager.getInstance().mFont, "P2: "
+		// + P2_lives, vbom);
+		// attachChild(p2);
 
 		// update handler to check if all the pieces are stationary
 		registerUpdateHandler(new IUpdateHandler() {
@@ -194,11 +223,18 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 					turnText.setText("Please wait");
 					if (!isWorldMoving()) {
 						currentState = nextState;
+						updateText();
+
+						// check if the game is over
+						if (P1_lives == 0 || P2_lives == 0) {
+							gameOver = true;
+						}
 					}
+					turnText.setText("Please wait");
 				} else {
 
 					if (!botThreadRunning && pieces.size() > 0) {
-						new Thread(AIBot).start();
+						// new Thread(AIBot).start();
 					}
 				}
 			}
@@ -213,6 +249,20 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		this.setOnSceneTouchListener(this);
 		this.setTouchAreaBindingOnActionDownEnabled(true);
+
+		// test the AI
+		// greedyBot = GreedyBot.getInstance();
+		// GameState currentState = new GameState();
+		// currentState = currentState.createGameState(this);
+		// Shot shot = greedyBot.findBestShot(currentState, 1);
+		// playShot(shot);
+
+		// test the evaluate function
+		// float score = greedyBot.evaluateShot(currentState, new Shot(101, new
+		// Vector2(0, -40)), PlayerNo.P1);
+		// Debug.i(TAG, "testing shot has a score of " + score);
+
+		// playShot(new Shot(101, new Vector2(0, -40)));
 
 	}
 
@@ -255,7 +305,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		// load platform
 		PlatformDef currPlatform = currentLevel.mPlatformDef;
-		platform = addPlatform(currPlatform.coords);
+		addPlatform(currPlatform.coords);
 	}
 
 	@Override
@@ -597,13 +647,139 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		}
 	}
 
+	private void loadLevel(int levelID) {
+		final SimpleLevelLoader levelLoader = new SimpleLevelLoader(vbom);
+
+		levelLoader
+				.registerEntityLoader(new EntityLoader<SimpleLevelEntityLoaderData>(
+						LevelConstants.TAG_LEVEL) {
+					public IEntity onLoadEntity(
+							final String pEntityName,
+							final IEntity pParent,
+							final Attributes pAttributes,
+							final SimpleLevelEntityLoaderData pSimpleLevelEntityLoaderData)
+							throws IOException {
+						final int width = SAXUtils.getIntAttributeOrThrow(
+								pAttributes,
+								LevelConstants.TAG_LEVEL_ATTRIBUTE_WIDTH);
+						final int height = SAXUtils.getIntAttributeOrThrow(
+								pAttributes,
+								LevelConstants.TAG_LEVEL_ATTRIBUTE_HEIGHT);
+						vertices = SAXUtils.getIntAttributeOrThrow(pAttributes,
+								TAG_LEVEL_VERTICES);
+
+						// TODO later we will specify camera BOUNDS and create
+						// invisible walls
+						// on the beginning and on the end of the level.
+
+						return null;
+					}
+				});
+
+		levelLoader
+				.registerEntityLoader(new EntityLoader<SimpleLevelEntityLoaderData>(
+						TAG_ENTITY) {
+					public IEntity onLoadEntity(
+							final String pEntityName,
+							final IEntity pParent,
+							final Attributes pAttributes,
+							final SimpleLevelEntityLoaderData pSimpleLevelEntityLoaderData)
+							throws IOException {
+						final int x = SAXUtils.getIntAttributeOrThrow(
+								pAttributes, TAG_ENTITY_ATTRIBUTE_X);
+						final int y = SAXUtils.getIntAttributeOrThrow(
+								pAttributes, TAG_ENTITY_ATTRIBUTE_Y);
+						final String type = SAXUtils.getAttributeOrThrow(
+								pAttributes, TAG_ENTITY_ATTRIBUTE_TYPE);
+						if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER1)) {
+							addChecker(x, y, PlayerNo.P1, P1_counter++);
+							P1_lives++;
+						} else if (type
+								.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER2)) {
+							addChecker(x, y, PlayerNo.P2, P2_counter++);
+							P2_lives++;
+						} else if (type
+								.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM)) {
+							final int z = SAXUtils.getIntAttributeOrThrow(
+									pAttributes, TAG_ENTITY_ATTRIBUTE_Z);
+
+							float_platform_coords.add((float) x);
+							float_platform_coords.add((float) y);
+							float_platform_coords.add((float) z);
+							vertice_counter++;
+							if (vertice_counter == vertices) {
+								// all of vertice data has been read in, we can
+								// create the platfrom
+								// convert arraylist to array
+								platform_cords = new float[float_platform_coords
+										.size()];
+								Iterator<Float> iterator = float_platform_coords
+										.iterator();
+								for (int i = 0; i < platform_cords.length; i++) {
+									platform_cords[i] = iterator.next()
+											.floatValue();
+								}
+
+								platform = addPlatform(platform_cords);
+								physicsWorld
+										.setContactListener(new MyContactListener(
+												pieces, platform));
+
+							}
+						}
+						return null;
+					}
+				});
+
+		levelLoader.loadLevelFromAsset(activity.getAssets(), "levels/"
+				+ levelID + ".lvl");
+	}
 
 	@Override
 	public void onBackKeyPressed() {
 		SceneManager.getInstance().showMenuScene();
 	}
 
+	private void updateText() {
+		ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable() {
 
+			@Override
+			public void run() {
+				if (currentState == WorldState.P1)
+					turnText.setText("It is Player 1's turn");
+				else if (currentState == WorldState.P2)
+					turnText.setText("It is Player 2's turn");
+				else if (gameOver)
+					turnText.setText("Game over");
+			}
+		});
+
+	}
+
+	public void updateP1Text() {
+		// ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable()
+		// {
+		//
+		// @Override
+		// public void run() {
+		// P1_lives--;
+		// Debug.i("P1 lost one, it has " + P1_lives + " left");
+		// p1.setText("P1: " + P1_lives);
+		// }
+		// });
+	}
+
+	public void updateP2Text() {
+		// ResourceManager.getInstance().engine.runOnUpdateThread(new Runnable()
+		// {
+		//
+		// @Override
+		// public void run() {
+		// P2_lives--;
+		// GameScene.getInstance().p2.setText("P2: " + P2_lives);
+		// }
+		// });
+	}
 
 	// Getters and Setters
 
@@ -629,6 +805,10 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 	public static Platform getPlatform() {
 		return platform;
+	}
+
+	public static float[] getPlatform_cords() {
+		return platform_cords;
 	}
 
 	public static LinkedList<Checker> getPieces() {

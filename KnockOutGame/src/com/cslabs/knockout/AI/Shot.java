@@ -50,7 +50,7 @@ public class Shot implements Comparable<Shot>{
 	}
 
 	public void dumpInfo(String t) {
-		Debug.i(t, "Shot has ID of " + firerID + " and velocity of " + velocity);
+		Debug.i(t, "Shot has ID of " + firerID + " and velocity of " + velocity + " and score of " + score);
 		
 	}
 	public void dumpInfo() {

@@ -31,51 +31,79 @@ public class GreedyBot extends AbstractAIBot {
 		player = currentPlayer; // maximizing player
 		opponent = (player == PlayerNo.P1) ? PlayerNo.P2 : PlayerNo.P1; // minimizing
 																		// player
-		return minimax(state, depth, player);
+		Shot a = new Shot(0, null);
+		a.setScore(Float.MIN_VALUE);
+
+		Shot b = new Shot(0, null);
+		b.setScore(Float.MAX_VALUE);
+
+		Shot best = minimax(state, depth, player, a, b);
+		if (best == null)
+			Debug.i(TAG, "FUCK SHOT IS EMPTY");
+		// best.dumpInfo("GreedyBot");
+
+		return best;
 	}
 
-	public Shot minimax(GameState state, int depth, PlayerNo currentPlayer) {
+	public Shot minimax(GameState state, int depth, PlayerNo currentPlayer,
+			Shot alpha, Shot beta) {
 		
-		Debug.i(TAG, "minmax at depth " + depth + " for player " + currentPlayer);
+		Shot fuck;
+
+		//Debug.i(TAG,
+		//		"minmax at depth " + depth + " for player " + currentPlayer
+		//				+ " a:" + alpha.getScore() + " b:" + beta.getScore());
 
 		if (depth == 0 || state.gameOver(currentPlayer))
 			return evaluate(state, currentPlayer);
 
-		Shot bestShot = null;
-		float bestScore = (currentPlayer == player) ? Float.MIN_VALUE
-				: Float.MAX_VALUE;
-
 		ArrayList<Shot> shots = state.generateShots(currentPlayer);
-		if(shots.size() == 1) return shots.get(0); 
-		for (Shot shot : shots) {
-			Debug.i(TAG, "going down!");
-			GameState nextState = state.simulate(shot);
-			float score = (currentPlayer == player) ? minimax(nextState,
-					depth - 1, opponent).getScore() : minimax(nextState,
-					depth - 1, opponent).getScore();
-			if (currentPlayer == player) {
-				if (score > bestScore) {
-					bestScore = score;
-					bestShot = shot;
+		if (shots.size() == 1)
+			return shots.get(0);
+
+		if (currentPlayer == player) {
+			// find max and store in alpha
+			for (Shot shot : shots) {
+				GameState nextState = state.simulate(shot);
+				fuck = minimax(nextState, depth - 1, opponent, alpha,
+						beta);
+				float score = fuck.getScore();
+				//Debug.i(TAG,"MiniMax shot data:");
+				fuck.dumpInfo(TAG);
+				if (score > alpha.getScore()) {
+					alpha = fuck;
+					//Debug.i(TAG, "Assigned new alpha of score:" + alpha.getScore());
 				}
-			} else if (currentPlayer == opponent) {
-				bestScore = score;
-				bestShot = shot;
+				if (alpha.getScore() >= beta.getScore())
+					return alpha; // cut off
 			}
+			return alpha;
+		} else if (currentPlayer == opponent) {
+			// find min and store in beta
+			for (Shot shot : shots) {
+				GameState nextState = state.simulate(shot);
+				fuck = minimax(nextState, depth - 1, opponent, alpha,
+						beta);
+				float score = fuck.getScore();
+				if (score < beta.getScore()) {
+					beta = fuck;
+					//Debug.i(TAG, "Assigned new beta of score:" + beta.getScore());
+				}
+				if (alpha.getScore() >= beta.getScore())
+					return beta; // cut off
+			}
+			return alpha;
 		}
 
-		return bestShot;
+		return null;
 	}
-
+	
 	@Override
 	public Shot evaluate(GameState state, PlayerNo currentPlayer) {
-		Debug.i(TAG,
-				"Calling evaluating state and dumping state info for player "
-						+ currentPlayer);
 		ArrayList<Shot> shots = state.generateShots(currentPlayer);
-		if(shots.size() == 0) {
+		if (shots.size() == 0) {
 			Debug.i("Game over!!!!!!!!!!!!!!!!!!");
-			Shot fuck =  new Shot(0, null);
+			Shot fuck = new Shot(0, null);
 			fuck.setScore(Float.MIN_VALUE);
 			return fuck;
 		}
@@ -89,11 +117,12 @@ public class GreedyBot extends AbstractAIBot {
 				bestShot = shot;
 			}
 		}
+		//Debug.i(TAG, "evaluating state for " + currentPlayer + " score of "
+		//		+ bestShot.getScore());
 		return bestShot;
 	}
 
-	public float evaluateShot(GameState state, Shot shot,
-			PlayerNo currentPlayer) {
+	public float evaluateShot(GameState state, Shot shot, PlayerNo currentPlayer) {
 
 		int[] state1, state2;
 		float x1, x2, y1, y2;
@@ -104,10 +133,11 @@ public class GreedyBot extends AbstractAIBot {
 
 		state1 = state.returnNumOfPlayerCheckers(currentPlayer);
 		state2 = nextState.returnNumOfPlayerCheckers(currentPlayer);
-		
-		//state.dumpInfo("GameScene");
-		//nextState.dumpInfo("GameScene");
-		//Debug.i(state1[0] + " " + state1[1] + " " + state2[0] +  " " + state2[1]);
+
+		// state.dumpInfo("GameScene");
+		// nextState.dumpInfo("GameScene");
+		// Debug.i(state1[0] + " " + state1[1] + " " + state2[0] + " " +
+		// state2[1]);
 
 		int kills = state1[1] - state2[1];
 		int deaths = state1[0] - state2[0];
@@ -140,6 +170,7 @@ public class GreedyBot extends AbstractAIBot {
 		shot.data[7] = score;
 
 		shot.setScore(score);
+		//Debug.i(TAG, "shot has score of " + score);
 		return score;
 
 	}

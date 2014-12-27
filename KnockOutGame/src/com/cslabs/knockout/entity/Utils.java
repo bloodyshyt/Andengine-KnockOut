@@ -1,5 +1,7 @@
 package com.cslabs.knockout.entity;
 
+import java.util.Random;
+
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
@@ -7,6 +9,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.debug.Debug;
 
 import com.badlogic.gdx.math.Vector2;
+import com.cslabs.knockout.AI.Shot;
 
 /**
  * @author The NG Family
@@ -17,6 +20,10 @@ public class Utils {
 	// Constants
 	public static final int MAX_POWER = 50;
 	public static final int FIRING_RADIUS = 100;
+	public static final int MAX_SKILL_LEVEL = 5;
+	
+	// static variables
+	static Random randomGenerator = new Random();
 
 	// converts array to vector and dividing PIXEL_TO_METER_RATIO_DEFAULT
 	public static Vector2[] arrayToVector2withMeterConv(float[] pBufferData) {
@@ -86,6 +93,16 @@ public class Utils {
 			return true;
 		}		
 		return false;
+	}
+	
+	public static void perturbShot(Shot shot, int pAccuracy) {
+		float Vx = shot.getVelocity().x;
+		float Vy = shot.getVelocity().y;
+		double perturbFactor = randomGenerator.nextGaussian();
+		float nVx = (float) (perturbFactor * Vx * (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vx);
+		float nVy = (float) (perturbFactor * Vy * (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vy);
+		shot.getVelocity().set(nVx, nVy);
+		Debug.i("Before: X:" + Vx + " Y:" + Vy + " After: X:" + nVx + " Y: " + nVy);
 	}
 
 }

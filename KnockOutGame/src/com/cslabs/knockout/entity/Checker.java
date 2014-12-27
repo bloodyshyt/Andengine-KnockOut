@@ -74,12 +74,6 @@ public class Checker extends Sprite implements CollidableEntity {
 		// set fixture as sensor
 		state = CheckerState.DEAD;
 		
-		if (playerNo == PlayerNo.P1) {
-			GameScene.getInstance().updateP1Text();
-		} else if (playerNo == PlayerNo.P2) {
-			GameScene.getInstance().updateP2Text();
-		}
-		
 		activity.runOnUpdateThread(new Runnable() {
 			@Override
 			public void run() {
