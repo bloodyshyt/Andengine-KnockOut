@@ -17,7 +17,6 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.cslabs.knockout.ResourceManager;
 import com.cslabs.knockout.entity.Platform;
 import com.cslabs.knockout.entity.Checker;
 import com.cslabs.knockout.entity.Utils;

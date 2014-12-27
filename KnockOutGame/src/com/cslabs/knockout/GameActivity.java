@@ -1,9 +1,7 @@
 package com.cslabs.knockout;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
-import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
@@ -15,12 +13,17 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.debug.Debug;
 
-import com.cslabs.knockout.scene.GameScene;
+import android.view.KeyEvent;
+
+import com.cslabs.knockout.Managers.ResourceManager;
+import com.cslabs.knockout.Managers.SceneManager;
 
 public class GameActivity extends BaseGameActivity {
 
 	public static final int CAMERA_WIDTH = 480;
 	public static final int CAMERA_HEIGHT = 800;
+	
+	//private Handler handler;
 
 	public Scene mScene;
 	
@@ -39,21 +42,33 @@ public class GameActivity extends BaseGameActivity {
 		Debug.i("Engine configured");
 		return engineOptions;
 	}
+	
+	@Override
+	public synchronized void onResumeGame() {
+		super.onResumeGame();
+		SceneManager.getInstance().getCurrentScene().onResume();
+	}
+
+	@Override
+	public synchronized void onPauseGame() {
+		super.onPauseGame();
+		SceneManager.getInstance().getCurrentScene().onPause();
+	}
 
 	@Override
 	public void onCreateResources(
 			OnCreateResourcesCallback pOnCreateResourcesCallback)
 			throws IOException {
 		ResourceManager.getInstance().create(this, getEngine(),
-				getEngine().getCamera(), getVertexBufferObjectManager());
-		ResourceManager.getInstance().loadGameGraphics();
+				(ZoomCamera) getEngine().getCamera(), getVertexBufferObjectManager());
+		//ResourceManager.getInstance().loadGameGraphics();
+		ResourceManager.getInstance().loadSplashGraphics();
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
 
 	@Override
 	public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback)
 			throws IOException {
-		mScene = new GameScene();
 		pOnCreateSceneCallback.onCreateSceneFinished(null);
 	}
 
@@ -62,8 +77,18 @@ public class GameActivity extends BaseGameActivity {
 			OnPopulateSceneCallback pOnPopulateSceneCallback)
 			throws IOException {
 
-		SceneManager.getInstance().showGameScene();
+		//SceneManager.getInstance().showGameScene();
+		SceneManager.getInstance().showSplashAndMenuScene();
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			SceneManager.getInstance().getCurrentScene().onBackKeyPressed();
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 
 }

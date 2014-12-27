@@ -11,6 +11,7 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.debug.Debug;
@@ -19,13 +20,13 @@ import org.andengine.util.modifier.IModifier;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.cslabs.knockout.GameActivity;
-import com.cslabs.knockout.ResourceManager;
-import com.cslabs.knockout.SceneManager;
 import com.cslabs.knockout.AI.Shot;
+import com.cslabs.knockout.Managers.ResourceManager;
+import com.cslabs.knockout.Managers.SceneManager;
 import com.cslabs.knockout.factory.CheckerFactory;
 import com.cslabs.knockout.scene.GameScene;
 
-public class Checker extends TiledSprite implements CollidableEntity {
+public class Checker extends Sprite implements CollidableEntity {
 
 	private static final String TAG = "Checker";
 
@@ -44,30 +45,26 @@ public class Checker extends TiledSprite implements CollidableEntity {
 
 	// variables
 	private CheckerState state = CheckerState.ALIVE;
-	private PlayerNo player;
+	private PlayerNo playerNo;
 	private int ID = 0;
 	private Body body;
 
 	public Sprite center;
 
-	public Checker(float pX, float pY, ITiledTextureRegion pTiledTextureRegion,
-			VertexBufferObjectManager pVertexBufferObjectManager, int ID) {
-		super(pX, pY, pTiledTextureRegion, pVertexBufferObjectManager);
+	public Checker(float pX, float pY, ITextureRegion player1TextureRegion,
+			VertexBufferObjectManager pVertexBufferObjectManager, PlayerNo playerNo, int ID) {
+		super(pX, pY, player1TextureRegion, pVertexBufferObjectManager);
 		vbom = ResourceManager.getInstance().vbom;
 		engine = ResourceManager.getInstance().engine;
 		camera = ResourceManager.getInstance().camera;
 		activity = ResourceManager.getInstance().activity;
 
 		// Assign ID and player No
-		this.setID(ID);
-		this.setPlayer();
+		this.ID = ID;
+		this.playerNo = playerNo;
 
 		// get instance of PhysicsWorld
 		physicsWorld = CheckerFactory.getInstance().getPhysicsWorld();
-
-		// Dump info into log cat
-		//dumpInfo();
-
 	}
 
 	public void die() {
@@ -77,11 +74,18 @@ public class Checker extends TiledSprite implements CollidableEntity {
 		// set fixture as sensor
 		state = CheckerState.DEAD;
 		
-		if (player == PlayerNo.P1) {
+		if (playerNo == PlayerNo.P1) {
 			GameScene.getInstance().updateP1Text();
-		} else if (player == PlayerNo.P2) {
+		} else if (playerNo == PlayerNo.P2) {
 			GameScene.getInstance().updateP2Text();
 		}
+		
+		activity.runOnUpdateThread(new Runnable() {
+			@Override
+			public void run() {
+				disablePhysicsBody();
+			}
+		});
 		
 		ScaleModifier scaleModifier = new ScaleModifier(2.0f, 1, 0);
 		IEntityModifierListener entityModifierListener = new IEntityModifierListener() {
@@ -113,7 +117,7 @@ public class Checker extends TiledSprite implements CollidableEntity {
 
 	public void dumpInfo() {
 		// dumps info about the current for debugging
-		Debug.i(TAG, "P: " + player + " ID: " + getID() + " dead?  " + state
+		Debug.i(TAG, "P: " + playerNo + " ID: " + getID() + " dead?  " + state
 				+ " X: " + this.getX() + " Y: " + this.getY());
 		;
 	}
@@ -143,6 +147,14 @@ public class Checker extends TiledSprite implements CollidableEntity {
 		System.gc();
 	}
 	
+	public void disablePhysicsBody() {
+		
+		for(int i=0; i<body.getFixtureList().size();i++){
+	        this.getBody().getFixtureList().get(i).setSensor(true);
+	    }
+			
+	}
+	
 //	public void dumpInfo() {
 //		// dumps info about the current for debugging
 //		Debug.i(TAG, "P: " + player + " ID: " + getID() + " dead?  " + state
@@ -154,16 +166,16 @@ public class Checker extends TiledSprite implements CollidableEntity {
 
 	private void setPlayer() {
 		if (getID() > 100 && getID() < 200)
-			player = PlayerNo.P1;
+			playerNo = PlayerNo.P1;
 		else if (getID() > 200 && getID() < 300)
-			player = PlayerNo.P2;
+			playerNo = PlayerNo.P2;
 		else
 			Debug.e(TAG, "WARNING! setPlayer returns null!");
 
 	}
 
 	public PlayerNo getPlayer() {
-		return player;
+		return playerNo;
 	}
 
 	public int getID() {

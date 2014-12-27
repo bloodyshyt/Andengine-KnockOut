@@ -4,12 +4,11 @@ package com.cslabs.knockout.scene;
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.entity.scene.Scene;
-import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.debug.Debug;
 
 import com.cslabs.knockout.GameActivity;
-import com.cslabs.knockout.ResourceManager;
+import com.cslabs.knockout.Managers.ResourceManager;
 
 /**
  * Base for all scenes, implements some default functionality.

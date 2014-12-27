@@ -55,12 +55,13 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.RayCastCallback;
 import com.badlogic.gdx.physics.box2d.World;
-import com.cslabs.knockout.ResourceManager;
-import com.cslabs.knockout.SceneManager;
+import com.cslabs.knockout.Managers.ResourceManager;
+import com.cslabs.knockout.Managers.SceneManager;
 import com.cslabs.knockout.AI.AbstractAIBot;
 import com.cslabs.knockout.AI.GameState;
 import com.cslabs.knockout.AI.GreedyBot;
 import com.cslabs.knockout.AI.Shot;
+import com.cslabs.knockout.GameLevels.LevelLoader;
 import com.cslabs.knockout.entity.Platform;
 import com.cslabs.knockout.entity.Checker;
 import com.cslabs.knockout.entity.PlayerNo;
@@ -73,6 +74,13 @@ import com.cslabs.knockout.utils.Stopwatch;
 public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		IOnSceneTouchListener, IScrollDetectorListener,
 		IPinchZoomDetectorListener {
+
+	// single instance is created only once
+	private static final GameScene INSTANCE = new GameScene();
+
+	public static GameScene getInstance() {
+		return INSTANCE;
+	}
 
 	private static final String TAG = "GameScene";
 
@@ -102,8 +110,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private static float[] platform_cords;
 	private int vertice_counter = 0;
 
-	// Variables for Checkers and corresponding
-	private static LinkedList<Checker> pieces = new LinkedList<Checker>();
+	// Variables for Checkers and corresponding dots
+	public static LinkedList<Checker> pieces = new LinkedList<Checker>();
 	private static LinkedList<Rectangle> dots = new LinkedList<Rectangle>();
 
 	private int P1_counter = 101;
@@ -155,13 +163,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	public static WorldState nextState = WorldState.P2;
 	private boolean gameOver = false;
 
-	// single instance is created only once
-	private static final GameScene INSTANCE = new GameScene();
-
-	public static GameScene getInstance() {
-		return INSTANCE;
-	}
-
 	public GameScene() {
 		super();
 		physicsWorld = new FixedStepPhysicsWorld(60, 1, new Vector2(0, 0),
@@ -184,6 +185,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		setBackground(new Background(Color.WHITE));
 
 		loadLevel(1);
+		
+		//LevelLoader.getInstance().loadLevel(1, physicsWorld, vbom);
 
 		registerUpdateHandler(physicsWorld);
 
@@ -427,7 +430,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		if (pSceneTouchEvent.isActionDown()) {
 			// Debug.i(TAG, "Checker touched");
-			mPinchZoomStartedCameraZoomFactor = this.mSmoothCamera.getZoomFactor();
+			mPinchZoomStartedCameraZoomFactor = this.mSmoothCamera
+					.getZoomFactor();
 			c.setVisible(false);
 		}
 
@@ -442,8 +446,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			// + " firing degree is " + degree);
 			if (Utils.isFingerAtEdgeofScreen(pSceneTouchEvent, mSmoothCamera)) {
 				// slowly zoom out
-				float currentZoomFactor = this.mSmoothCamera
-						.getZoomFactor();
+				float currentZoomFactor = this.mSmoothCamera.getZoomFactor();
 				final float newZoomFactor = (float) (currentZoomFactor * 0.95);
 				if (newZoomFactor > 0.8) {
 					this.mSmoothCamera.setZoomFactor(newZoomFactor);
@@ -464,7 +467,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			c.setVisible(true);
 			// c.flick(shot);
 			updateState();
-			
+
 			// restore the original level of zoom
 			this.mSmoothCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor);
 
@@ -543,7 +546,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		tempPiece.setVisible(true);
 		line.setVisible(true);
 		arrow.setVisible(true);
-	} 
+	}
 
 	public void clearVisualAids() {
 		tempPiece1.setVisible(false);
@@ -554,9 +557,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	}
 
 	// Helper method
-	private void addPlayingPiece(float x, float y, int ID) {
+	private void addChecker(float x, float y, PlayerNo playerNo, int ID) {
 		Checker piece = CheckerFactory.getInstance().createPlayingPiece(x, y,
-				ID);
+				playerNo, ID);
 		registerTouchArea(piece);
 		attachChild(piece);
 		pieces.add(piece);
@@ -640,11 +643,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 						final String type = SAXUtils.getAttributeOrThrow(
 								pAttributes, TAG_ENTITY_ATTRIBUTE_TYPE);
 						if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER1)) {
-							addPlayingPiece(x, y, P1_counter++);
+							addChecker(x, y, PlayerNo.P1, P1_counter++);
 							P1_lives++;
 						} else if (type
 								.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER2)) {
-							addPlayingPiece(x, y, P2_counter++);
+							addChecker(x, y, PlayerNo.P2, P2_counter++);
 							P2_lives++;
 						} else if (type
 								.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM)) {
@@ -681,6 +684,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		levelLoader.loadLevelFromAsset(activity.getAssets(), "levels/"
 				+ levelID + ".lvl");
+	}
+	
+	@Override
+	public void onBackKeyPressed() {
+		SceneManager.getInstance().showMenuScene();
 	}
 
 	private void updateText() {
