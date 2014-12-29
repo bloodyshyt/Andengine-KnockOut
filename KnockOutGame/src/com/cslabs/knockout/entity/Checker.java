@@ -49,15 +49,20 @@ public class Checker extends Sprite implements CollidableEntity {
 	private int ID = 0;
 	private Body body;
 
+	public ITextureRegion player1TextureRegion;
+
 	public Sprite center;
 
 	public Checker(float pX, float pY, ITextureRegion player1TextureRegion,
-			VertexBufferObjectManager pVertexBufferObjectManager, PlayerNo playerNo, int ID) {
+			VertexBufferObjectManager pVertexBufferObjectManager,
+			PlayerNo playerNo, int ID) {
 		super(pX, pY, player1TextureRegion, pVertexBufferObjectManager);
 		vbom = ResourceManager.getInstance().vbom;
 		engine = ResourceManager.getInstance().engine;
 		camera = ResourceManager.getInstance().camera;
 		activity = ResourceManager.getInstance().activity;
+
+		this.player1TextureRegion = player1TextureRegion;
 
 		// Assign ID and player No
 		this.ID = ID;
@@ -68,19 +73,18 @@ public class Checker extends Sprite implements CollidableEntity {
 	}
 
 	public void die() {
-	
 
 		// death animation
 		// set fixture as sensor
 		state = CheckerState.DEAD;
-		
+
 		activity.runOnUpdateThread(new Runnable() {
 			@Override
 			public void run() {
 				disablePhysicsBody();
 			}
 		});
-		
+
 		ScaleModifier scaleModifier = new ScaleModifier(2.0f, 1, 0);
 		IEntityModifierListener entityModifierListener = new IEntityModifierListener() {
 
@@ -94,7 +98,6 @@ public class Checker extends Sprite implements CollidableEntity {
 			@Override
 			public void onModifierFinished(IModifier<IEntity> pModifier,
 					final IEntity pItem) {
-				final PhysicsWorld physicsWorld = GameScene.getInstance().physicsWorld;
 				activity.runOnUpdateThread(new Runnable() {
 					@Override
 					public void run() {
@@ -129,32 +132,43 @@ public class Checker extends Sprite implements CollidableEntity {
 		final PhysicsConnector myPhysicsConnector = physicsWorld
 				.getPhysicsConnectorManager().findPhysicsConnectorByShape(this);
 
-		physicsWorld.unregisterPhysicsConnector(myPhysicsConnector);
-		physicsWorld.destroyBody(myPhysicsConnector.getBody());
+		if (myPhysicsConnector != null) {
+			physicsWorld.unregisterPhysicsConnector(myPhysicsConnector);
+			body.setActive(false);
+			physicsWorld.destroyBody(body);
 
-		SceneManager.getInstance().getCurrentScene().detachChild(this);
-		SceneManager.getInstance().getCurrentScene().unregisterTouchArea(this);
-		
-		GameScene.getInstance().getPieces().remove(this);
-		Debug.i("LOG", GameScene.getInstance().getPieces().size() + "");
+			SceneManager.getInstance().getCurrentScene().detachChild(this);
+			SceneManager.getInstance().getCurrentScene()
+					.unregisterTouchArea(this);
+			
+			Debug.i(TAG, "Successfully removed checker");
+		}
+
+//		physicsWorld.unregisterPhysicsConnector(myPhysicsConnector);
+//		physicsWorld.destroyBody(myPhysicsConnector.getBody());
+//
+//		SceneManager.getInstance().getCurrentScene().detachChild(this);
+//		SceneManager.getInstance().getCurrentScene().unregisterTouchArea(this);
+
+		GameScene.getInstance().removeChecker(this);
 
 		System.gc();
 	}
-	
+
 	public void disablePhysicsBody() {
-		
-		for(int i=0; i<body.getFixtureList().size();i++){
-	        this.getBody().getFixtureList().get(i).setSensor(true);
-	    }
-			
+
+		for (int i = 0; i < body.getFixtureList().size(); i++) {
+			this.getBody().getFixtureList().get(i).setSensor(true);
+		}
+
 	}
-	
-//	public void dumpInfo() {
-//		// dumps info about the current for debugging
-//		Debug.i(TAG, "P: " + player + " ID: " + getID() + " dead?  " + state
-//				+ " X: " + this.getX() + " Y: " + this.getY());
-//		;
-//	}
+
+	// public void dumpInfo() {
+	// // dumps info about the current for debugging
+	// Debug.i(TAG, "P: " + player + " ID: " + getID() + " dead?  " + state
+	// + " X: " + this.getX() + " Y: " + this.getY());
+	// ;
+	// }
 
 	// Getters and Setters
 

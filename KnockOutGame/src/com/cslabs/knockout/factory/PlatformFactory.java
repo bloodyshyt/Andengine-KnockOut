@@ -59,7 +59,7 @@ public class PlatformFactory {
 		return platform;
 	}
 	
-	public static VirtualPlatform clonePlatformIntoPhysicsWorld(FixedStepPhysicsWorld world, Platform p)
+	public VirtualPlatform clonePlatformIntoPhysicsWorld(FixedStepPhysicsWorld world, Platform p)
 	{
 		Body body = p.getBody();
 		final BodyDef boxBodyDef = new BodyDef();

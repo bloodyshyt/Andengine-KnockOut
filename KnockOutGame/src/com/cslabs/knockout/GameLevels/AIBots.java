@@ -21,7 +21,7 @@ public class AIBots {
 	// ====================================================
 	// METHODS
 	// ====================================================
-	public static final AIBotDef getLevelDef(final String pBotName) {
+	public static final AIBotDef getAIBotDef(final String pBotName) {
 		for (AIBotDef curLevelDef : AvailableAIBots) {
 			if (curLevelDef.doNamesMatch(pBotName))
 				return curLevelDef;
@@ -54,6 +54,6 @@ public class AIBots {
 	}
 	
 	public enum AIBotTypes {
-		GREEDYBOT, MONTE_CARLO, YOLO;
+		MINIMAX, GREEDYBOT, MONTE_CARLO, YOLO;
 	}
 }

@@ -6,7 +6,7 @@ public abstract class AbstractAIBot {
 
 	public abstract Shot evaluate(GameState state, PlayerNo currentPlayer);
 
-	public abstract Shot findBestShot(GameState state, PlayerNo currentPlayer);
+	public abstract Shot findBestShot(GameState state, PlayerNo currentPlayer, final int depth, final int pAccuracy);
 	
 
 }
