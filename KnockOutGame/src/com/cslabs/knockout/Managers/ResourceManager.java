@@ -47,6 +47,8 @@ public class ResourceManager {
 	public ITextureRegion checkerCenterRegion;
 	public ITextureRegion player1TextureRegion;
 	public ITextureRegion player2TextureRegion;
+	public ITextureRegion player3TextureRegion;
+	public ITextureRegion player4TextureRegion;
 
 	// game font used
 	public Font mFont;
@@ -106,6 +108,12 @@ public class ResourceManager {
 		player2TextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createFromAsset(gameTextureAtlas, activity.getAssets(),
 						"greenchecker.png");
+		player3TextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(gameTextureAtlas, activity.getAssets(),
+						"orangechecker.png");
+		player3TextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(gameTextureAtlas, activity.getAssets(),
+						"yellowchecker.png");
 		
 		try {
 			gameTextureAtlas

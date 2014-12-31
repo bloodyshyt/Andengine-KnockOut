@@ -30,6 +30,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.cslabs.knockout.AI.AIBotWrapper;
 import com.cslabs.knockout.AI.GameState;
+import com.cslabs.knockout.AI.MiniMaxBot;
 import com.cslabs.knockout.AI.Shot;
 import com.cslabs.knockout.GameLevels.AIBots.AIBotTypes;
 import com.cslabs.knockout.GameLevels.Levels;
@@ -73,8 +74,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private Player currentPlayer;
 	public LinkedList<Checker> gameCheckers = new LinkedList<Checker>();
 
-	//public static AIBotWrapper[] botWrappers = {null, new AIBotWrapper(1, 5, AIBotTypes.MINIMAX), null, null};
-	public static AIBotWrapper[] botWrappers = {null, null, null, null};
+	public static AIBotWrapper[] botWrappers = {null, new AIBotWrapper(1, 5, AIBotTypes.MINIMAX), null, null};
+	//public static AIBotWrapper[] botWrappers = {null, null, null, null};
 	Iterator<Body> bodies;
 
 	// Variables for platform
@@ -99,7 +100,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 	private volatile boolean botThreadRunning = false;
 
-	WorldState currentState = WorldState.STATE_FIRING;
+	private static WorldState currentState = WorldState.PLAYER_TURN;
 
 	public GameScene() {
 		super();
@@ -161,22 +162,20 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		this.setOnSceneTouchListener(this);
 		this.setTouchAreaBindingOnActionDownEnabled(true);
-
+		
 	}
 
 	// ====================================================
 	// LEVEL LOADING
 	// ====================================================
 	private void loadLevel(final int pLevelIndex) {
-		
-		LinkedList<Player> tempPlayers = new LinkedList<Player>();
-
+	
 		int p1index, p2index, p3index, p4index;
 
-		p1index = 100;
-		p2index = 200;
-		p3index = 300;
-		p4index = 400;
+		p1index = 101;
+		p2index = 201;
+		p3index = 301;
+		p4index = 401;
 
 		// get LevelDef object
 		LevelDef currentLevel = Levels.getLevelDef(pLevelIndex);
@@ -228,6 +227,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		}
 		
 		playerTurnCycle.closeCycle();
+		currentPlayer = playerTurnCycle.getHead();
 
 		// load platform
 		PlatformDef currPlatform = currentLevel.mPlatformDef;
@@ -410,6 +410,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			currentState = WorldState.STATE_FIRING;
 			// restore the original level of zoom
 			this.mSmoothCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor);
+			
 
 		}
 		return true;
@@ -448,28 +449,30 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private void playTurn(final Player player) {
 		Debug.i(TAG, "turn for " + player.playerNo + "isCPU? " + player.isCPU);
 		if (player.isCPU) {
-			// run find best shot in a separate thread
-			AIBot = new Runnable() {
-				public void run() {
-					botThreadRunning = true;
-					GameState currentState = generateGameState();
-					Stopwatch timer = new Stopwatch();
-					Shot shot = player.playTurn(currentState);
-					if (shot != null) {
-						shot.dumpInfo();
-						playShot(shot);
-						stopAIBotThread();
-					}
-					Debug.i(TAG,
-							"Found the best shot in " + timer.elapsedTime()
-									+ " seconds");
+			if (AIBotThread == null) {
+				// run find best shot in a separate thread
+				AIBot = new Runnable() {
+					public void run() {
+						botThreadRunning = true;
+						GameState currentState = new GameState().createFromScene(physicsWorld);
+						Stopwatch timer = new Stopwatch();
+						Shot shot = botWrappers[player.playerNo.getValue() - 1].findBestShot(currentState, player);
+						//Shot shot = MiniMaxBot.getInstance().findBestShot2Player(currentState, player, 1 , 5);
+						if (shot != null) {
+							shot.dumpInfo();
+							playShot(shot);
+							stopAIBotThread();
+						}
+						Debug.i(TAG,
+								"Found the best shot in " + timer.elapsedTime()
+										+ " seconds");
 
-					botThreadRunning = false;
-				}
-			};
-			
-			AIBotThread = new Thread(AIBot);
-			AIBotThread.start();
+						botThreadRunning = false;
+					}
+				};
+				AIBotThread = new Thread(AIBot);
+				AIBotThread.start();
+			}
 		}
 	}
 	
@@ -499,11 +502,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		currentState = WorldState.STATE_FIRING;
 	}
 
-	private GameState generateGameState() {
-		//GameState state = new GameState();
-		//return state.createGameStateFromScene(this, currentPlayer.playerNo);
-		return null;
-	}
 
 	public void createVisualAids() {
 		tempPiece1 = new Sprite(0, 0,

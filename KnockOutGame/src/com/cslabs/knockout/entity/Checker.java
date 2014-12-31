@@ -144,12 +144,6 @@ public class Checker extends Sprite implements CollidableEntity {
 			Debug.i(TAG, "Successfully removed checker");
 		}
 
-//		physicsWorld.unregisterPhysicsConnector(myPhysicsConnector);
-//		physicsWorld.destroyBody(myPhysicsConnector.getBody());
-//
-//		SceneManager.getInstance().getCurrentScene().detachChild(this);
-//		SceneManager.getInstance().getCurrentScene().unregisterTouchArea(this);
-
 		GameScene.getInstance().removeChecker(this);
 
 		System.gc();

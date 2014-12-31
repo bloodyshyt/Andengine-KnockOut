@@ -1,9 +1,11 @@
 package com.cslabs.knockout.entity;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import org.andengine.engine.camera.ZoomCamera;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.debug.Debug;
@@ -21,7 +23,7 @@ public class Utils {
 	public static final int MAX_POWER = 50;
 	public static final int FIRING_RADIUS = 100;
 	public static final int MAX_SKILL_LEVEL = 5;
-	
+
 	// static variables
 	static Random randomGenerator = new Random();
 
@@ -47,20 +49,18 @@ public class Utils {
 				FIRING_RADIUS);
 	}
 
-
-
 	public static Vector2 generateVelocity(double distance, double angle) {
 
 		final int Vx = (int) (MAX_POWER * Math.cos(angle));
 		final int Vy = (int) (MAX_POWER * Math.sin(angle));
 
-		final Vector2 velocity = new Vector2(Vx, Vy).mul(
-				(float) (distance / FIRING_RADIUS));
+		final Vector2 velocity = new Vector2(Vx, Vy)
+				.mul((float) (distance / FIRING_RADIUS));
 		return velocity;
 	}
-	
+
 	public static Vector2 generateVelocity(int power, double angle) {
-		int newPower =  Math.min(power, MAX_POWER);
+		int newPower = Math.min(power, MAX_POWER);
 
 		final int Vx = (int) (newPower * Math.cos(angle));
 		final int Vy = (int) (newPower * Math.sin(angle));
@@ -69,16 +69,18 @@ public class Utils {
 
 		return velocity;
 	}
-	
-	public static boolean isFingerAtEdgeofScreen(final TouchEvent pSceneTouchEvent, final ZoomCamera camera) {
-		
+
+	public static boolean isFingerAtEdgeofScreen(
+			final TouchEvent pSceneTouchEvent, final ZoomCamera camera) {
+
 		// Constants
-		final float edge = 0.08f;	// percent of the screen that is considered near the edge
-		
+		final float edge = 0.08f; // percent of the screen that is considered
+									// near the edge
+
 		// Variables
 		float currentZoom, camCenterX, camCenterY;
 		float X1, Y1, X, Y, x, y;
-		
+
 		currentZoom = camera.getZoomFactor();
 		camCenterX = camera.getCenterX();
 		camCenterY = camera.getCenterY();
@@ -88,21 +90,32 @@ public class Utils {
 		y = pSceneTouchEvent.getY();
 		X1 = camCenterX - X / 2;
 		Y1 = camCenterY - Y / 2;
-		
-		if((x > X1 && x < X1 + edge * X) || (x > X1 + (1 - edge) * X && x < X1 + X)) {
+
+		if ((x > X1 && x < X1 + edge * X)
+				|| (x > X1 + (1 - edge) * X && x < X1 + X)) {
 			return true;
-		}		
+		}
 		return false;
 	}
-	
+
 	public static void perturbShot(Shot shot, int pAccuracy) {
 		float Vx = shot.getVelocity().x;
 		float Vy = shot.getVelocity().y;
 		double perturbFactor = randomGenerator.nextGaussian();
-		float nVx = (float) (perturbFactor * Vx * (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vx);
-		float nVy = (float) (perturbFactor * Vy * (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vy);
+		float nVx = (float) (perturbFactor * Vx
+				* (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vx);
+		float nVy = (float) (perturbFactor * Vy
+				* (0.1 * (MAX_SKILL_LEVEL - pAccuracy)) + Vy);
 		shot.getVelocity().set(nVx, nVy);
-		Debug.i("Before: X:" + Vx + " Y:" + Vy + " After: X:" + nVx + " Y: " + nVy);
+		Debug.i("Before: X:" + Vx + " Y:" + Vy + " After: X:" + nVx + " Y: "
+				+ nVy);
+	}
+
+	public static <T> List<T> copyIterator(Iterator<T> iter) {
+		List<T> copy = new ArrayList<T>();
+		while (iter.hasNext())
+			copy.add(iter.next());
+		return copy;
 	}
 
 }
