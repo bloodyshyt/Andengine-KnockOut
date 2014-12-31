@@ -15,7 +15,7 @@ import com.cslabs.knockout.entity.VirtualChecker;
 
 public class MiniMaxBot extends AbstractAIBot {
 
-	private static final String TAG = "GreedyBot";
+	private static final String TAG = "MiniMaxBot";
 
 	// single instance is created only once
 	private static final MiniMaxBot INSTANCE = new MiniMaxBot();
@@ -36,7 +36,8 @@ public class MiniMaxBot extends AbstractAIBot {
 		Shot bestShot = null;
 		float bestScore = Float.MIN_VALUE, score;
 		for (Shot shot : shots) {
-			score = minimax(state, currentPlayer, pDepth);
+			//score = minimax(state, currentPlayer, pDepth);
+			score = ab(state, currentPlayer, pDepth, Float.MIN_VALUE, Float.MAX_VALUE);
 			if (score > bestScore) {
 				bestScore = score;
 				bestShot = shot;
@@ -150,6 +151,7 @@ public class MiniMaxBot extends AbstractAIBot {
 		double sumOfdist = 0;
 
 		GameState nextState = state.simulate(shot);
+		shot.setNextGameState(nextState);
 
 		state1 = state.getNumOfPlayerAndOpponentCheckers(currentPlayer);
 		state2 = nextState.getNumOfPlayerAndOpponentCheckers(currentPlayer);
@@ -216,10 +218,10 @@ public class MiniMaxBot extends AbstractAIBot {
 			Shot shot) {
 		float score = evaluateShot(state1, shot, currentPlayer);
 		if (score > 0) {
-			Debug.i(TAG, "shot successfull with score of " + score);
+
 			return true;
 		}
-
+		shot.setNextGameState(null);
 		return false;
 	}
 
@@ -243,16 +245,57 @@ public class MiniMaxBot extends AbstractAIBot {
 			for (Shot shot : shots)
 				max = Math.max(
 						max,
-						minimax(state.simulate(shot),
+						minimax(shot.getNextGameState(),
 								currentPlayer.getNextPlayer(), depth - 1));
 			return max;
 		} else {
 			for (Shot shot : shots)
 				min = Math.min(
 						min,
-						minimax(state.simulate(shot),
+						minimax(shot.getNextGameState(),
 								currentPlayer.getNextPlayer(), depth - 1));
 			return min;
 		}
+	}
+
+	private float ab(GameState state, Player currentPlayer, int depth,
+			float alpha, float beta) {
+		if (depth == 1)
+			return evaluate(state, currentPlayer).getScore();
+
+		ArrayList<Shot> shots = state.generateShots(currentPlayer,
+				(AbstractAIBot) this);
+
+		Collections.sort(shots, Collections.reverseOrder());
+		shots = (ArrayList<Shot>) shots.subList(0, 2);
+
+		if (currentPlayer == maxPlayer) {
+			for (Shot shot : shots) {
+				alpha = Math.max(
+						alpha,
+						ab(shot.getNextGameState(),
+								currentPlayer.getNextPlayer(), depth - 1,
+								alpha, beta));
+				if (alpha > beta)
+					return alpha;
+			}
+
+			return alpha;
+		}
+
+		else {
+			for (Shot shot : shots) {
+				beta = Math.min(
+						beta,
+						ab(shot.getNextGameState(),
+								currentPlayer.getNextPlayer(), depth - 1,
+								alpha, beta));
+				if (alpha > beta)
+					return beta;
+			}
+
+			return beta;
+		}
+
 	}
 }

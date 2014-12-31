@@ -58,6 +58,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	
 	private static Thread AIBotThread;
 	private static Runnable AIBot;
+	
+	private static boolean firstTurn = true;
 
 	// ====================================================
 	// CONSTANTS
@@ -74,8 +76,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private Player currentPlayer;
 	public LinkedList<Checker> gameCheckers = new LinkedList<Checker>();
 
-	public static AIBotWrapper[] botWrappers = {null, new AIBotWrapper(1, 5, AIBotTypes.MINIMAX), null, null};
-	//public static AIBotWrapper[] botWrappers = {null, null, null, null};
+	public static AIBotWrapper[] botWrappers = {new AIBotWrapper(1, 5, AIBotTypes.MINIMAX), null, null, null};
+	//public static AIBotWra pper[] botWrappers = {null, null, null, null};
 	Iterator<Body> bodies;
 
 	// Variables for platform
@@ -136,6 +138,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 			@Override
 			public void onUpdate(float pSecondsElapsed) {
+				
+				if(firstTurn) {
+					playTurn(currentPlayer);
+					firstTurn = false;
+				}
 
 				if (currentState == WorldState.STATE_FIRING) {
 					if (!isWorldMoving()) {
@@ -162,6 +169,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		this.setOnSceneTouchListener(this);
 		this.setTouchAreaBindingOnActionDownEnabled(true);
+		
+		
 		
 	}
 
@@ -447,12 +456,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	}
 
 	private void playTurn(final Player player) {
-		Debug.i(TAG, "turn for " + player.playerNo + "isCPU? " + player.isCPU);
+		Debug.i(TAG, "turn for " + player.playerNo + " isCPU? " + player.isCPU);
 		if (player.isCPU) {
 			if (AIBotThread == null) {
 				// run find best shot in a separate thread
 				AIBot = new Runnable() {
 					public void run() {
+						Debug.i(TAG, "Strating new thread for " + player.playerNo);
 						botThreadRunning = true;
 						GameState currentState = new GameState().createFromScene(physicsWorld);
 						Stopwatch timer = new Stopwatch();
