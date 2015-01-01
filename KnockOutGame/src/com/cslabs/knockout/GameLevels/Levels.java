@@ -16,12 +16,16 @@ public class Levels {
 	private static final LevelDef[] AvailableLevels = new LevelDef[] {
 			new LevelDef(1, 1, new PlatformDef(new float[] { 80, 100, 0, 400,
 					100, 0, 400, 700, 0, 80, 700, 0 }), new CheckerDef[] {
-					new CheckerDef(140, 500, PlayerNo.P1),
-					new CheckerDef(240, 500, PlayerNo.P1),
-					new CheckerDef(340, 500, PlayerNo.P1) }, new CheckerDef[] {
-					new CheckerDef(140, 300, PlayerNo.P2),
-					new CheckerDef(240, 300, PlayerNo.P2),
-					new CheckerDef(340, 300, PlayerNo.P2) }, null, null),
+					new CheckerDef(140, 600, PlayerNo.P1),
+					new CheckerDef(240, 600, PlayerNo.P1),
+					new CheckerDef(340, 600, PlayerNo.P1),
+					new CheckerDef(190, 500, PlayerNo.P1),
+					new CheckerDef(290, 500, PlayerNo.P1)}, new CheckerDef[] {
+					new CheckerDef(140, 200, PlayerNo.P2),
+					new CheckerDef(240, 200, PlayerNo.P2),
+					new CheckerDef(340, 200, PlayerNo.P2),
+					new CheckerDef(190, 300, PlayerNo.P2),
+					new CheckerDef(290, 300, PlayerNo.P2)}, null, null),
 
 			new LevelDef(2, 1, new PlatformDef(new float[] { 240, 750, 0, 425,
 					700, 0, 425, 200, 0, 240, 50, 0, 65, 100, 0, 65, 700, 0 }),

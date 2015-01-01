@@ -16,7 +16,8 @@ public class Shot implements Comparable<Shot> {
 	private int firerID; // ID of piece to be fired
 	private float score;
 	private Vector2 velocity; // velocity piece to be fired at
-	private GameState nextGameState; // reference to resultant from the shot
+	
+	private VirtualGameState nextState;
 
 	public float[] data = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -88,12 +89,12 @@ public class Shot implements Comparable<Shot> {
 		this.score = score;
 	}
 
-	public GameState getNextGameState() {
-		return nextGameState;
+	public VirtualGameState getNextState() {
+		return nextState;
 	}
 
-	public void setNextGameState(GameState nextGameState) {
-		this.nextGameState = nextGameState;
+	public void setNextState(VirtualGameState nextState) {
+		this.nextState = nextState;
 	}
 
 }

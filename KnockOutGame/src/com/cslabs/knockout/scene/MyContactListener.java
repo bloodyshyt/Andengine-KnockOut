@@ -1,5 +1,6 @@
 package com.cslabs.knockout.scene;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.andengine.util.debug.Debug;
@@ -17,10 +18,10 @@ import com.cslabs.knockout.entity.PlayerNo;
 
 public class MyContactListener implements ContactListener {
 
-	private LinkedList<Checker> pieces;
+	private ArrayList<Checker> pieces;
 	private Platform platform;
 
-	public MyContactListener(LinkedList<Checker> pieces, Platform platform) {
+	public MyContactListener(ArrayList<Checker> pieces, Platform platform) {
 		this.pieces = pieces;
 		this.platform = platform;
 	} 

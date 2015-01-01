@@ -1,5 +1,6 @@
 package com.cslabs.knockout.scene;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
@@ -29,9 +30,9 @@ import org.andengine.util.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.cslabs.knockout.AI.AIBotWrapper;
-import com.cslabs.knockout.AI.GameState;
-import com.cslabs.knockout.AI.MiniMaxBot;
 import com.cslabs.knockout.AI.Shot;
+import com.cslabs.knockout.AI.TestPhysicsWorld;
+import com.cslabs.knockout.AI.VirtualGameState;
 import com.cslabs.knockout.GameLevels.AIBots.AIBotTypes;
 import com.cslabs.knockout.GameLevels.Levels;
 import com.cslabs.knockout.GameLevels.Levels.CheckerDef;
@@ -55,10 +56,10 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// single instance is created only once
 	private static final GameScene INSTANCE = new GameScene();
 	private static final String TAG = "GameScene";
-	
+
 	private static Thread AIBotThread;
 	private static Runnable AIBot;
-	
+
 	private static boolean firstTurn = true;
 
 	// ====================================================
@@ -71,13 +72,17 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// VARIABLES
 	// ====================================================
 	public FixedStepPhysicsWorld physicsWorld;
-	
+
 	private static PlayerTurnCycle playerTurnCycle;
 	private Player currentPlayer;
-	public LinkedList<Checker> gameCheckers = new LinkedList<Checker>();
+	public ArrayList<Checker> gameCheckers = new ArrayList<Checker>();
 
-	public static AIBotWrapper[] botWrappers = {new AIBotWrapper(1, 5, AIBotTypes.MINIMAX), null, null, null};
-	//public static AIBotWra pper[] botWrappers = {null, null, null, null};
+	public static AIBotWrapper[] botWrappers = {new AIBotWrapper(2, 1,
+	AIBotTypes.MINIMAX), new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null, null};
+	/*public static AIBotWrapper[] botWrappers = {
+			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT),
+			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT),
+			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null };*/
 	Iterator<Body> bodies;
 
 	// Variables for platform
@@ -110,7 +115,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				false, 6, 2);
 		CheckerFactory.getInstance().create(physicsWorld, vbom);
 		PlatformFactory.getInstance().create(physicsWorld, vbom);
-		mSmoothCamera = (SmoothCamera) ResourceManager.getInstance().camera; 	
+		mSmoothCamera = (SmoothCamera) ResourceManager.getInstance().camera;
 
 	}
 
@@ -138,8 +143,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 			@Override
 			public void onUpdate(float pSecondsElapsed) {
-				
-				if(firstTurn) {
+
+				if (firstTurn) {
 					playTurn(currentPlayer);
 					firstTurn = false;
 				}
@@ -170,15 +175,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		this.setOnSceneTouchListener(this);
 		this.setTouchAreaBindingOnActionDownEnabled(true);
 		
-		
-		
 	}
 
 	// ====================================================
 	// LEVEL LOADING
 	// ====================================================
 	private void loadLevel(final int pLevelIndex) {
-	
+
 		int p1index, p2index, p3index, p4index;
 
 		p1index = 101;
@@ -196,10 +199,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				Checker c = addChecker(cDef.mX, cDef.mY, PlayerNo.P1, p1index++);
 				P1Checkers.add(c);
 				gameCheckers.add(c);
-				
+
 			}
 			Debug.i(TAG, "P1Checkers has size " + P1Checkers.size());
-			playerTurnCycle =  new PlayerTurnCycle(new Player(P1Checkers, PlayerNo.P1, botWrappers[0]));
+			playerTurnCycle = new PlayerTurnCycle(new Player(P1Checkers,
+					PlayerNo.P1, botWrappers[0]));
 		}
 
 		if (currentLevel.mP2Checkers != null) {
@@ -209,8 +213,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				P2Checkers.add(c);
 				gameCheckers.add(c);
 			}
-			
-			playerTurnCycle.addPlayer(new Player(P2Checkers, PlayerNo.P2, botWrappers[1]));
+
+			playerTurnCycle.addPlayer(new Player(P2Checkers, PlayerNo.P2,
+					botWrappers[1]));
 		}
 
 		if (currentLevel.mP3Checkers != null) {
@@ -220,8 +225,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				P3Checkers.add(c);
 				gameCheckers.add(c);
 			}
-			
-			playerTurnCycle.addPlayer(new Player(P3Checkers, PlayerNo.P3, botWrappers[2]));
+
+			playerTurnCycle.addPlayer(new Player(P3Checkers, PlayerNo.P3,
+					botWrappers[2]));
 		}
 
 		if (currentLevel.mP4Checkers != null) {
@@ -231,10 +237,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				P4Checkers.add(c);
 				gameCheckers.add(c);
 			}
-			
-			playerTurnCycle.addPlayer(new Player(P4Checkers, PlayerNo.P4, botWrappers[3]));
+
+			playerTurnCycle.addPlayer(new Player(P4Checkers, PlayerNo.P4,
+					botWrappers[3]));
 		}
-		
+
 		playerTurnCycle.closeCycle();
 		currentPlayer = playerTurnCycle.getHead();
 
@@ -328,14 +335,14 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene,
 			final TouchEvent pSceneTouchEvent) {
-//		Debug.i(TAG,
-//				"X:" + pSceneTouchEvent.getX() + " Y:"
-//						+ pSceneTouchEvent.getY() + " zoom:"
-//						+ mSmoothCamera.getZoomFactor());
-//		Debug.i(TAG, "Camera center: X:" + mSmoothCamera.getCenterX() + " Y:"
-//				+ mSmoothCamera.getCenterY());
-//		Debug.i(TAG, "Camera bounds: Height:" + mSmoothCamera.getHeight()
-//				+ "Width:" + mSmoothCamera.getWidth());
+		// Debug.i(TAG,
+		// "X:" + pSceneTouchEvent.getX() + " Y:"
+		// + pSceneTouchEvent.getY() + " zoom:"
+		// + mSmoothCamera.getZoomFactor());
+		// Debug.i(TAG, "Camera center: X:" + mSmoothCamera.getCenterX() + " Y:"
+		// + mSmoothCamera.getCenterY());
+		// Debug.i(TAG, "Camera bounds: Height:" + mSmoothCamera.getHeight()
+		// + "Width:" + mSmoothCamera.getWidth());
 		this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
 
 		if (this.mPinchZoomDetector.isZooming()) {
@@ -399,7 +406,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				// slowly zoom out
 				float currentZoomFactor = this.mSmoothCamera.getZoomFactor();
 				final float newZoomFactor = (float) (currentZoomFactor * 0.95);
-				if (newZoomFactor > 0.8) {
+				
+				if (newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR) {
+					// Set the new zoom factor
 					this.mSmoothCamera.setZoomFactor(newZoomFactor);
 				}
 			}
@@ -419,7 +428,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			currentState = WorldState.STATE_FIRING;
 			// restore the original level of zoom
 			this.mSmoothCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor);
-			
 
 		}
 		return true;
@@ -462,12 +470,14 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				// run find best shot in a separate thread
 				AIBot = new Runnable() {
 					public void run() {
-						Debug.i(TAG, "Strating new thread for " + player.playerNo);
+						Debug.i(TAG, "Strating new thread for "
+								+ player.playerNo);
 						botThreadRunning = true;
-						GameState currentState = new GameState().createFromScene(physicsWorld);
+						TestPhysicsWorld testWorld = new TestPhysicsWorld()
+								.createWorldFromScene(physicsWorld);
 						Stopwatch timer = new Stopwatch();
-						Shot shot = botWrappers[player.playerNo.getValue() - 1].findBestShot(currentState, player);
-						//Shot shot = MiniMaxBot.getInstance().findBestShot2Player(currentState, player, 1 , 5);
+						Shot shot = botWrappers[player.playerNo.getValue() - 1]
+								.findBestShot(testWorld, player);
 						if (shot != null) {
 							shot.dumpInfo();
 							playShot(shot);
@@ -485,13 +495,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			}
 		}
 	}
-	
+
 	private void stopAIBotThread() {
-		//use to stop the thread myThread 
-		if(AIBotThread != null) {
-		Thread dummy = AIBotThread; 
-		AIBotThread = null; 
-		dummy.interrupt();
+		// use to stop the thread myThread
+		if (AIBotThread != null) {
+			Thread dummy = AIBotThread;
+			AIBotThread = null;
+			dummy.interrupt();
 		}
 	}
 
@@ -511,7 +521,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		}
 		currentState = WorldState.STATE_FIRING;
 	}
-
 
 	public void createVisualAids() {
 		tempPiece1 = new Sprite(0, 0,
@@ -541,8 +550,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	}
 
 	public void updateVisualAids(float x1, float y1, float x2, float y2) {
-		
-		tempPiece = (currentPlayer.playerNo == PlayerNo.P1) ? tempPiece1 : tempPiece2;
+
+		tempPiece = (currentPlayer.playerNo == PlayerNo.P1) ? tempPiece1
+				: tempPiece2;
 
 		float distance = Utils.calculateDistance(x1, y1, x2, y2);
 		float degree = MathUtils.atan2(y2 - y1, x2 - x1);
@@ -585,13 +595,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	@Override
 	public void onPause() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onResume() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public static GameScene getInstance() {
@@ -601,7 +611,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 	public void removeChecker(Checker checker) {
 		gameCheckers.remove(checker);
-		if(playerTurnCycle.removeChecker(checker)) {
+		if (playerTurnCycle.removeChecker(checker)) {
 			Debug.i(TAG, "Checker successfully removed from playerTurnCycle");
 		}
 	}

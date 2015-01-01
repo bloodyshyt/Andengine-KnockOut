@@ -1,17 +1,24 @@
 package com.cslabs.knockout.entity;
 
-import com.badlogic.gdx.physics.box2d.Body;
-
 public class VirtualChecker {
 	private static final String TAG = "VirtualChecker";
 
 	private int ID;
 	private PlayerNo player;
 	private boolean alive = true;
+	public float x,y;
 
 	public VirtualChecker(int ID, PlayerNo playerNo) {
 		this.ID = ID;
 		this.player = playerNo;
+	}
+	
+	public VirtualChecker(int ID, PlayerNo playerNo, float x, float y, boolean alive) {
+		this.ID = ID;
+		this.player = playerNo;
+		this.x = x;
+		this.y = y;
+		this.alive = alive;
 	}
 
 	public VirtualChecker(Checker c) {
