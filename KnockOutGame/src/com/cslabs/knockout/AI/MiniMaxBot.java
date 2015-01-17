@@ -23,19 +23,25 @@ public class MiniMaxBot extends AbstractAIBot {
 	@Override
 	public float evaluate(TestPhysicsWorld state,
 			VirtualGameState currentState, Player currentPlayer) {
-		
-		ArrayList<Shot> possibleMoves = world.generateShots(currentState, currentPlayer);
-		List<Shot> sortedMoves = filterMoves(currentState, currentPlayer, possibleMoves, 3);
-		
+
+		ArrayList<Shot> possibleMoves = world.generateShots(currentState,
+				currentPlayer);
+		List<Shot> sortedMoves = filterMoves(currentState, currentPlayer,
+				possibleMoves, 3);
+		int[] lives = currentState.getNumOfPlayerAndOpponent(currentPlayer);
+		 
 		float score = 0.0f;
-		
-		for(Shot shot : sortedMoves) {
+
+		for (Shot shot : sortedMoves) {
 			score += evaluateShot(currentState, shot, currentPlayer);
 		}
+
 		
-		//Debug.i(TAG, "Evaluating state returned score of " + score);
+		score += 1000 * lives[0] - 600 * lives[1];
 		
-		return score;
+		Debug.i(TAG, "Evaluating state returned score of " + score + " with life of " + lives[0] + " " + lives[1]);
+		
+		return  score;
 
 	}
 
@@ -48,64 +54,76 @@ public class MiniMaxBot extends AbstractAIBot {
 		this.maxPlayer = currentPlayer;
 
 		ArrayList<Shot> shots = world.generateShots(currentPlayer);
-		List<Shot> filteredShots = filterMoves(initialState, currentPlayer, shots, 3);
+		List<Shot> filteredShots = filterMoves(initialState, currentPlayer,
+				shots, 3);
 
 		Shot bestShot = null;
 		float bestScore = Float.MIN_VALUE;
-		float score;
-		
+		float score = Float.MIN_VALUE;
+
 		Debug.i(TAG, "Expanding on " + filteredShots.size() + " shots");
-		
+
 		for (Shot shot : filteredShots) {
 			// for each shot create a minimax tree
-			score = minimax(initialState, currentPlayer, depth);
-			
-			Debug.i(TAG, "Score of " + score);
-			
-			if (score > bestScore) {
+			score = minimax(world.simulate(initialState, shot), currentPlayer.getNextPlayer(), depth - 1);
+
+			//Debug.i(TAG, "Score of " + score);
+
+			if (score >= bestScore) {
 				bestScore = score;
 				bestShot = shot;
+				Debug.i(TAG, "Found a better shot");
 			}
 		}
 
-		if(bestShot != null) bestShot.dumpInfo();
+		if (bestShot == null) 
+			Debug.i(TAG, "WTF findbestshot returned nothing!");
+		Utils.perturbShot(bestShot, pAccuracy);
 		return bestShot;
 	}
 
 	private float minimax(VirtualGameState currentState, Player currentPlayer,
 			int depth) {
-		
-		//Debug.i(TAG, "In minimax depth " + depth + " player " + currentPlayer.playerNo);
-		
 
+		int lives[] = currentState.getNumOfPlayerAndOpponent(currentPlayer);
+		
+		Debug.i(TAG, "In minimax depth " + depth + " player " +
+		currentPlayer.playerNo + " with " + lives[0] + " and opponent " + lives[1]);
+
+		if(lives[0] == 0) return (currentPlayer == maxPlayer) ? Float.MIN_VALUE : Float.MAX_VALUE;
 		if (depth == 1)
 			return evaluate(world, currentState, currentPlayer);
-		if(currentState.isGameOver(currentPlayer)) {
-			Debug.i(TAG, "Game is OVER!");
-			return Float.MIN_VALUE;
-		}
-			
 
 		float max = Float.MIN_VALUE, min = Float.MAX_VALUE;
 
 		ArrayList<Shot> shots = world
 				.generateShots(currentState, currentPlayer);
-		List<Shot> filterdShots = filterMoves(currentState, currentPlayer, shots, 3);
-		if(filterdShots.size() == 0) return Float.MIN_VALUE;
-		
+		List<Shot> filterdShots = filterMoves(currentState, currentPlayer,
+				shots, 3);
+			
 		if (currentPlayer == maxPlayer) {
-			for (Shot shot : filterdShots)
+			for (Shot shot : filterdShots) {
+
 				max = Math.max(
 						max,
 						minimax(shot.getNextState(),
 								currentPlayer.getNextPlayer(), depth - 1));
+			}
 			return max;
 		} else {
-			for (Shot shot : filterdShots)
+			for (Shot shot : filterdShots) {
+
+				if (shot.getNextState().isGameOver(
+						currentPlayer.getNextPlayer())) {
+					// this move kills of the player's checkers, winning shot
+					Debug.i("Opponent has found the winning shot!!!!!!!!!!!!!");
+					return Float.MIN_VALUE;
+				}
 				min = Math.min(
 						min,
 						minimax(shot.getNextState(),
 								currentPlayer.getNextPlayer(), depth - 1));
+			}
 			return min;
 		}
 
@@ -135,7 +153,7 @@ public class MiniMaxBot extends AbstractAIBot {
 		shot.setNextState(nextState);
 
 		// currnetly we use the same heuristic as greedybot
-		int[] state1 = initialState.getNumOfPlayerAndOpponent(currentPlayer);
+		int[] state1 = currentState.getNumOfPlayerAndOpponent(currentPlayer);
 		int[] state2 = nextState.getNumOfPlayerAndOpponent(currentPlayer);
 
 		int deaths = state1[0] - state2[0];
@@ -153,30 +171,30 @@ public class MiniMaxBot extends AbstractAIBot {
 				}
 			}
 		}
-		
-		//Debug.i(TAG, "Before " + state1[0] + " " + state1[1] + " After " + state2[0] + " " + state2[1]);
 
-		return (float) (800 * kills - 1000 * deaths - 0.1 * sumDist);
+		// Debug.i(TAG, "Before " + state1[0] + " " + state1[1] + " After " +
+		// state2[0] + " " + state2[1]);
+		
+		float score = (float) (800 * kills - 1000 * deaths + 0.1 * sumDist);
+		shot.setScore(score);
+		
+		//Debug.i(TAG, "score of " + score);
+		return score;
 	}
 
 	private List<Shot> filterMoves(VirtualGameState currentState,
 			Player currentPlayer, ArrayList<Shot> shots, int length) {
-		ArrayList<Shot> filteredMoves = new ArrayList<Shot>();
-		final float scoreThreshold = 0;
-		for (Shot shot : shots) {
-			if (evaluateShot(currentState, shot, currentPlayer) > scoreThreshold) {
-				filteredMoves.add(shot);
-			}
-		}
 
-		Debug.i(TAG, "Before filterMoves() " + shots.size() + " after "
-				+ filteredMoves.size());
+		for (Shot shot : shots) 
+			evaluateShot(currentState, shot, currentPlayer); 
 
-		Collections.sort(filteredMoves, Collections.reverseOrder());
 
-		if(filteredMoves.size() < length) return (List<Shot>) filteredMoves;
-		
-		return filteredMoves.subList(0, length);
+		Collections.sort(shots, Collections.reverseOrder());
+
+		if (shots.size() < length)
+			return (List<Shot>) shots;
+
+		return shots.subList(0, length);
 	}
 
 	public static MiniMaxBot getInstance() {

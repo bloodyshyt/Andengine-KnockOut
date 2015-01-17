@@ -21,7 +21,7 @@ public class AIBotWrapper {
 			Debug.i("AIBotWrapper", "Calling minimax bot");
 			return MiniMaxBot.getInstance().findBestShot2Player(state, currentPlayer, intelligence, accuracy);
 		case GREEDYBOT:
-			Debug.i("AIBotWrapper", "Calling minimax bot");
+			Debug.i("AIBotWrapper", "Calling greedybot bot");
 			return GreedyBot.getInstance().findBestShot2Player(state, currentPlayer, intelligence, accuracy);
 		default:
 			return null;

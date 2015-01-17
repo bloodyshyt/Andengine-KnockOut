@@ -60,6 +60,7 @@ public class MenuSceneWrapper extends AbstractScene implements
 			return true;
 		case 1:
 			// options
+			SceneManager.getInstance().showPlayerSelectionScene();
 			return true;
 		case 2: 
 			// help

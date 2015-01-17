@@ -20,12 +20,12 @@ public class Levels {
 					new CheckerDef(240, 600, PlayerNo.P1),
 					new CheckerDef(340, 600, PlayerNo.P1),
 					new CheckerDef(190, 500, PlayerNo.P1),
-					new CheckerDef(290, 500, PlayerNo.P1)}, new CheckerDef[] {
+					new CheckerDef(290, 500, PlayerNo.P1) }, new CheckerDef[] {
 					new CheckerDef(140, 200, PlayerNo.P2),
 					new CheckerDef(240, 200, PlayerNo.P2),
 					new CheckerDef(340, 200, PlayerNo.P2),
 					new CheckerDef(190, 300, PlayerNo.P2),
-					new CheckerDef(290, 300, PlayerNo.P2)}, null, null),
+					new CheckerDef(290, 300, PlayerNo.P2) }, null, null),
 
 			new LevelDef(2, 1, new PlatformDef(new float[] { 240, 750, 0, 425,
 					700, 0, 425, 200, 0, 240, 50, 0, 65, 100, 0, 65, 700, 0 }),
@@ -37,7 +37,31 @@ public class Levels {
 							new CheckerDef(340, 400, PlayerNo.P2) },
 					new CheckerDef[] { new CheckerDef(140, 300, PlayerNo.P3),
 							new CheckerDef(240, 300, PlayerNo.P3),
-							new CheckerDef(340, 300, PlayerNo.P3) }, null) };
+							new CheckerDef(340, 300, PlayerNo.P3) }, null),
+			new LevelDef(3, 1, new PlatformDef(new float[] { 80, 100, 0, 400,
+					100, 0, 400, 700, 0, 80, 700, 0 }), new CheckerDef[] {
+					new CheckerDef(140, 600, PlayerNo.P1),
+					new CheckerDef(240, 600, PlayerNo.P1),
+					new CheckerDef(340, 600, PlayerNo.P1),
+					new CheckerDef(190, 600, PlayerNo.P1),
+					new CheckerDef(290, 600, PlayerNo.P1) }, new CheckerDef[] {
+					new CheckerDef(140, 200, PlayerNo.P2),
+					new CheckerDef(240, 200, PlayerNo.P2),
+					new CheckerDef(340, 200, PlayerNo.P2),
+					new CheckerDef(190, 200, PlayerNo.P2),
+					new CheckerDef(290, 200, PlayerNo.P2) }, null, null),
+			new LevelDef(4, 1, new PlatformDef(new float[] { 80, 100, 0, 400,
+					100, 0, 400, 700, 0, 80, 700, 0 }), new CheckerDef[] {
+					new CheckerDef(382, 167, PlayerNo.P1),
+					new CheckerDef(90, 192, PlayerNo.P1),
+					new CheckerDef(210, 315, PlayerNo.P1),
+					new CheckerDef(254, 158, PlayerNo.P1),
+					new CheckerDef(234, 388, PlayerNo.P1) }, new CheckerDef[] {
+					new CheckerDef(382, 257, PlayerNo.P2),
+					new CheckerDef(302, 359, PlayerNo.P2),
+					new CheckerDef(354, 268, PlayerNo.P2),
+					new CheckerDef(246, 600, PlayerNo.P2),
+					new CheckerDef(156, 580, PlayerNo.P2) }, null, null) };
 
 	// ====================================================
 	// METHODS

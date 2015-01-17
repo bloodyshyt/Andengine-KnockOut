@@ -29,7 +29,7 @@ import com.cslabs.knockout.entity.VirtualPlatform;
 import com.cslabs.knockout.utils.Stopwatch;
 
 public class TestPhysicsWorld extends FixedStepPhysicsWorld {
-	
+
 	private static final String TAG = "TestPhysicsWorld";
 
 	Platform platform;
@@ -41,7 +41,7 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 			Vector2 pGravity, boolean pAllowSleep) {
 		super(pStepsPerSecond, pMaximumStepsPerUpdate, pGravity, pAllowSleep);
 	}
-	
+
 	public TestPhysicsWorld() {
 		super(60, 1, new Vector2(0, 0), false, 6, 2);
 	}
@@ -57,7 +57,7 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 				copyPlatformIntoPhysicsWorld(this, body);
 			}
 		}
-		
+
 		return this;
 	}
 
@@ -111,17 +111,18 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 		}
 	}
 
-	public ArrayList<Shot> generateShots(VirtualGameState currentState, Player currentPlayer) {
-		
+	public ArrayList<Shot> generateShots(VirtualGameState currentState,
+			Player currentPlayer) {
+
 		this.setWorldFromVirtualGameState(currentState);
 		return generateShots(currentPlayer);
 	}
-	
+
 	public ArrayList<Shot> generateShots(Player currentPlayer) {
 		// for now we don't use the raycasting, it might save time
 		Stopwatch timer = new Stopwatch();
 		int counter = 0;
-		
+
 		// construct an arraylist of player and opponent bodies to iterate
 		// through and generate shots
 		ArrayList<Body> playerBodies = new ArrayList<Body>();
@@ -152,34 +153,93 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 				// float bestScore = Float.MIN_VALUE;
 				int step = 4;
 				double change = (angleRange[1] - angleRange[0]) / step;
-				//for (double degree = angleRange[0]; degree < angleRange[1]; degree += MathUtils.degToRad(2)) {
+				// for (double degree = angleRange[0]; degree < angleRange[1];
+				// degree += MathUtils.degToRad(2)) {
 				for (double degree = angleRange[0]; degree < angleRange[1]; degree += change) {
-					int lowerPower = (int) ((distance / 0.4828) * 1.3);
-					for (int power = Utils.MAX_POWER; power > lowerPower; power -= 10) {
+					int lowerPower = (int) Math.min((distance / 0.4828) * 1.3,
+							Utils.MAX_POWER);
+
+					for (int power = Utils.MAX_POWER; power > lowerPower; power -= 5) {
 						Shot shot = new Shot(
 								((VirtualChecker) playerCheckerBody.getUserData())
 										.getID(), (int) (power), (float) degree);
 						VirtualGameState next = simulate(shot);
-						int[] lives = next.getNumOfPlayerAndOpponent(currentPlayer);
 						shots.add(shot);
 						counter++;
 					}
 				}
 			}
 		}
-		Debug.i(TAG, "Generated " + counter + " shots in " + timer.elapsedTime() + " seconds");
+		Debug.i(TAG,
+				"Generated " + counter + " shots in " + timer.elapsedTime()
+						+ " seconds");
 		return shots;
+	}
+
+	public Shot generateSafeShot(Player currentPlayer) {
+		// for each player checker, generate 20 random shots
+		// best safe shot is the one with the maximum
+		float maxSumDist = Float.MIN_VALUE;
+		Shot safeShot = null;
+		
+		ArrayList<Body> playerBodies = new ArrayList<Body>();
+		ArrayList<Body> opponentBodies = new ArrayList<Body>();
+		ArrayList<Shot> shots = new ArrayList<Shot>();
+		Iterator<Body> bodies = this.getBodies();
+		Body body;
+
+		while (bodies.hasNext()) {
+			body = bodies.next();
+			if (body.getUserData() instanceof VirtualChecker) {
+				if (((VirtualChecker) body.getUserData()).getPlayer() == currentPlayer.playerNo) {
+					playerBodies.add(body);
+				} else
+					opponentBodies.add(body);
+			}
+		}
+
+		for (Body currBody : playerBodies) {
+			for (int i = 0; i < 20; i++) {
+				int power = Utils.randInt(0, Utils.MAX_POWER);
+				int degree = Utils.randInt(0, 360);
+				shots.add(new Shot(((VirtualChecker) currBody.getUserData())
+						.getID(), power, MathUtils.degToRad(degree)));
+			}
+		}
+	
+		for(Shot shot : shots) {
+			VirtualGameState nextState = this.simulate(shot);
+			float sumDist = 0;
+			ArrayList<VirtualChecker> vcs = nextState.gameVirtualCheckers;
+			for (int i = 0; i < vcs.size(); i++) {
+				for (int j = 1; j < vcs.size(); j++) {
+					if (vcs.get(i).getPlayer() == currentPlayer.playerNo
+							&& vcs.get(j).getPlayer() != currentPlayer.playerNo) {
+						VirtualChecker a = vcs.get(i);
+						VirtualChecker b = vcs.get(j);
+						
+						sumDist += Utils.calculateDistance(a.x, a.y, b.x, b.y);
+						if(sumDist > maxSumDist) {
+							maxSumDist = sumDist;
+							safeShot = shot;
+						}
+					}
+				}
+			}
+			
+		}
+		return safeShot;
 	}
 
 	/**
 	 * @param shot
-	 * @return VirtualGameState of the resultant world, the testPhysicsWorld is set back to the state
-	 * prior to simulation
+	 * @return VirtualGameState of the resultant world, the testPhysicsWorld is
+	 *         set back to the state prior to simulation
 	 */
 	public VirtualGameState simulate(Shot shot) {
-		
+
 		VirtualGameState currentState = this.extractState();
-		
+
 		Body body = this.getBodyFromID(shot.getFirerID());
 		body.setLinearVelocity(shot.getVelocity());
 
@@ -189,17 +249,17 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 			mWorld.step(1.0f / 60.0f, 10, 8);
 			mWorld.clearForces();
 		}
-		
+
 		// update the isAlive status of virtual checkers
 		this.updateVirtualCheckerState();
 
 		VirtualGameState newState = this.extractState();
-		
+
 		// set the world back as before
 		this.setWorldFromVirtualGameState(currentState);
-		
+
 		return newState;
-		
+
 	}
 
 	public VirtualGameState simulate(VirtualGameState intitialState, Shot shot) {
@@ -208,11 +268,13 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 		this.setWorldFromVirtualGameState(intitialState);
 		return nextState;
 	}
+
 	// helper methods
-	private static void copyPlatformIntoPhysicsWorld(TestPhysicsWorld world, Body body) {
-		
+	private static void copyPlatformIntoPhysicsWorld(TestPhysicsWorld world,
+			Body body) {
+
 		Platform userData = (Platform) body.getUserData();
-		
+
 		final BodyDef boxBodyDef = new BodyDef();
 
 		boxBodyDef.type = BodyType.StaticBody;
@@ -239,10 +301,11 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 		boxBody.setUserData(vp);
 	}
 
-	private static void copyCheckerIntoPhysicsWorld(TestPhysicsWorld world, Body body) {
-		
+	private static void copyCheckerIntoPhysicsWorld(TestPhysicsWorld world,
+			Body body) {
+
 		Checker userData = (Checker) body.getUserData();
-		
+
 		final FixtureDef pFixture = PhysicsFactory.createFixtureDef(1f, 0.5f,
 				5f);
 
@@ -326,13 +389,13 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 		while (iter.hasNext()) {
 			Contact contact = iter.next();
 			if (contact.isTouching())
-				// goes thorugh all contact objects that represent a contact between virtual checker 
+				// goes thorugh all contact objects that represent a contact
+				// between virtual checker
 				// and platform, these virtual checkers are set as ALIVE
 				checkCollision(contact);
 		}
 	}
 
-	
 	private void checkCollision(Contact contact) {
 
 		// Both are playing pieces
@@ -357,7 +420,5 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 			p1.setAsAlive();
 		}
 	}
-
-
 
 }

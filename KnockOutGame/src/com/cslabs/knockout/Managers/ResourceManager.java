@@ -49,10 +49,18 @@ public class ResourceManager {
 	public ITextureRegion player2TextureRegion;
 	public ITextureRegion player3TextureRegion;
 	public ITextureRegion player4TextureRegion;
+	
+	// player selection textures
+	private BuildableBitmapTextureAtlas playerSelectionTextureAtlas;
+
+	public ITiledTextureRegion playerIconTextureRegion;
+	public ITextureRegion leftArrowTextureRegion;
+	public ITextureRegion rightArrowTextureRegion;
 
 	// game font used
 	public Font mFont;
 	public Font menuFont;
+	public Font mSmallFont;
 
 	// sounds
 
@@ -125,6 +133,42 @@ public class ResourceManager {
 			throw new RuntimeException("Error while loading game textures", e);
 		}
 	}
+	
+	public void loadPlayerSelectionGraphics() {
+
+		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		
+		playerSelectionTextureAtlas = new BuildableBitmapTextureAtlas(
+				activity.getTextureManager(), 1024, 512,
+				BitmapTextureFormat.RGBA_8888,
+				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+
+		
+		playerIconTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
+						"player_icons.png", 2, 1);
+		leftArrowTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
+						"left_arrow.png");
+
+		rightArrowTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
+						"right_arrow.png");
+		
+		try {
+			playerSelectionTextureAtlas
+					.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(
+							2, 0, 2));
+			playerSelectionTextureAtlas.load();
+
+		} catch (final TextureAtlasBuilderException e) {
+			throw new RuntimeException("Error while loading game textures", e);
+		}
+	}
+	
+	public void unloadPlayerSelectionGraphics() {
+		playerSelectionTextureAtlas.unload();
+	}
 
 	public void loadGameAudio() {
 		// NOTHING DOING HERE
@@ -136,6 +180,11 @@ public class ResourceManager {
 				engine.getTextureManager(), 256, 256,
 				Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 32f, true);
 		mFont.load();
+		
+		mSmallFont = FontFactory.create(engine.getFontManager(),
+				engine.getTextureManager(), 256, 256,
+				Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 24f, true);
+		mSmallFont.load();
 
 		menuFont = FontFactory.createStroke(activity.getFontManager(),
 				activity.getTextureManager(), 512, 256,

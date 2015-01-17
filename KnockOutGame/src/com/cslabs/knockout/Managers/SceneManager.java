@@ -11,6 +11,7 @@ import com.cslabs.knockout.scene.AbstractScene;
 import com.cslabs.knockout.scene.GameScene;
 import com.cslabs.knockout.scene.LoadingScene;
 import com.cslabs.knockout.scene.MenuSceneWrapper;
+import com.cslabs.knockout.scene.PlayerSelectionMenu;
 import com.cslabs.knockout.scene.SplashScene;
 
 public class SceneManager {
@@ -18,7 +19,7 @@ public class SceneManager {
 	private static final String TAG = "SceneManager";
 
 	private static final SceneManager INSTANCE = new SceneManager();
-	public static final long SPLASH_DURATION = 2000;
+	public static final long SPLASH_DURATION = 200;
 
 	private ResourceManager res = ResourceManager.getInstance();
 
@@ -95,6 +96,26 @@ public class SceneManager {
 		}.execute();
 
 	}
+	
+	public void showPlayerSelectionScene() {
+		final AbstractScene previousScene = getCurrentScene();
+		setCurrentScene(loadingScene);
+		
+		new AsyncTask<Void, Void, Void>() {
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				res.loadPlayerSelectionGraphics();
+				PlayerSelectionMenu playerSelectionMenu = new PlayerSelectionMenu();
+				playerSelectionMenu.populate();
+				setCurrentScene(playerSelectionMenu);
+				previousScene.destroy();
+				return null;
+			}
+			
+		}.execute();
+		
+	}
 
 	public void showGameScene() {
 		final AbstractScene previousScene = getCurrentScene();
@@ -122,5 +143,4 @@ public class SceneManager {
 		res.engine.setScene(currentScene);
 		Debug.i("Current scene: " + currentScene.getClass().getName());
 	}
-
 }

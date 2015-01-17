@@ -14,7 +14,7 @@ public class AIBots {
 
 	private static final AIBotDef[] AvailableAIBots = new AIBotDef[] {
 		new AIBotDef("Sally", AIBotTypes.GREEDYBOT, 3, 2),
-		new AIBotDef("Bob", AIBotTypes.GREEDYBOT, 5, 1),
+		new AIBotDef("Bob", AIBotTypes.MINIMAX, 5, 1),
 		new AIBotDef("Dick", AIBotTypes.GREEDYBOT, 4, 3)
 	};
 
@@ -55,5 +55,9 @@ public class AIBots {
 	
 	public enum AIBotTypes {
 		MINIMAX, GREEDYBOT, MONTE_CARLO, YOLO;
+	}
+
+	public static AIBotDef[] getAvailableaibots() {
+		return AvailableAIBots;
 	}
 }

@@ -32,13 +32,27 @@ public class GreedyBot extends AbstractAIBot {
 		float score;
 		for (Shot shot : shots) {
 			score = evaluateShot(world, shot);
-			if(score > bestScore) {
+			
+			if(score == Float.MAX_VALUE) {
+				// game winning shot has been found, execute 
+				Utils.perturbShot(shot, pAccuracy);
+				return shot;
+			}
+			if(score >= bestScore) {
 				bestScore = score;
 				bestShot = shot;
 			}
 		}
 		
-		return bestShot;
+		if(bestShot == null || bestScore == Float.MIN_VALUE) {
+			// no kill shots were generated, go for a safe shot instead
+			Shot safeShots = state.generateSafeShot(currentPlayer);
+			Utils.perturbShot(safeShots, pAccuracy);
+			return safeShots;
+		} else {
+			Utils.perturbShot(bestShot, pAccuracy);
+			return bestShot;
+		}
 	}
 
 	@Override
@@ -66,6 +80,8 @@ public class GreedyBot extends AbstractAIBot {
 		int[] state1 = initialState.getNumOfPlayerAndOpponent(currentPlayer);
 		int[] state2 = nextState.getNumOfPlayerAndOpponent(currentPlayer);
 
+		if(state2[0] > 0) return Float.MAX_VALUE;	// shot kills all opponent checkers
+		
 		int deaths = state1[0] - state2[0];
 		int kills = state1[1] - state2[1];
 		float sumDist = 0;
@@ -82,7 +98,7 @@ public class GreedyBot extends AbstractAIBot {
 			}
 		}
 		
-		return (float) (800 * kills - 1000 * deaths - 0.1 * sumDist);
+		return (float) (800 * kills - 1000 * deaths + 0.1 * sumDist);
 
 	}
 

@@ -3,8 +3,6 @@ package com.cslabs.knockout.scene;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -15,6 +13,11 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.scene.menu.MenuScene;
+import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
+import org.andengine.entity.scene.menu.item.IMenuItem;
+import org.andengine.entity.scene.menu.item.TextMenuItem;
+import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
@@ -27,19 +30,23 @@ import org.andengine.util.adt.color.Color;
 import org.andengine.util.debug.Debug;
 import org.andengine.util.math.MathUtils;
 
+import android.opengl.GLES20;
+import android.view.KeyEvent;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.cslabs.knockout.AI.AIBotWrapper;
 import com.cslabs.knockout.AI.Shot;
 import com.cslabs.knockout.AI.TestPhysicsWorld;
-import com.cslabs.knockout.AI.VirtualGameState;
 import com.cslabs.knockout.GameLevels.AIBots.AIBotTypes;
 import com.cslabs.knockout.GameLevels.Levels;
 import com.cslabs.knockout.GameLevels.Levels.CheckerDef;
 import com.cslabs.knockout.GameLevels.Levels.LevelDef;
 import com.cslabs.knockout.GameLevels.Levels.PlatformDef;
 import com.cslabs.knockout.Managers.ResourceManager;
+import com.cslabs.knockout.Managers.SceneManager;
 import com.cslabs.knockout.entity.Checker;
+import com.cslabs.knockout.entity.CheckerState;
 import com.cslabs.knockout.entity.Platform;
 import com.cslabs.knockout.entity.Player;
 import com.cslabs.knockout.entity.PlayerNo;
@@ -51,7 +58,7 @@ import com.cslabs.knockout.utils.Stopwatch;
 
 public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		IOnSceneTouchListener, IScrollDetectorListener,
-		IPinchZoomDetectorListener {
+		IPinchZoomDetectorListener, IOnMenuItemClickListener {
 
 	// single instance is created only once
 	private static final GameScene INSTANCE = new GameScene();
@@ -75,14 +82,19 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 	private static PlayerTurnCycle playerTurnCycle;
 	private Player currentPlayer;
-	public ArrayList<Checker> gameCheckers = new ArrayList<Checker>();
+	public volatile ArrayList<Checker> gameCheckers = new ArrayList<Checker>();
 
-	public static AIBotWrapper[] botWrappers = {new AIBotWrapper(2, 1,
-	AIBotTypes.MINIMAX), new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null, null};
-	/*public static AIBotWrapper[] botWrappers = {
-			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT),
-			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT),
-			new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null };*/
+	/*
+	 * public static AIBotWrapper[] botWrappers = { new AIBotWrapper(0, 4,
+	 * AIBotTypes.GREEDYBOT), new AIBotWrapper(2 , 5, AIBotTypes.MINIMAX), null,
+	 * null };
+	 */
+	public static AIBotWrapper[] botWrappers = { null, null, null, null };
+	/*
+	 * public static AIBotWrapper[] botWrappers = { new AIBotWrapper(0, 5,
+	 * AIBotTypes.GREEDYBOT), new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), new
+	 * AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null };
+	 */
 	Iterator<Body> bodies;
 
 	// Variables for platform
@@ -106,6 +118,13 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private SmoothCamera mSmoothCamera;
 
 	private volatile boolean botThreadRunning = false;
+	//private MenuScene mMenuScene;
+	private static volatile int[] playerLives = new int[4];
+
+	// game over pop up menu
+	protected static final int MENU_TEXT = 0;
+	protected static final int MENU_RESET = MENU_TEXT + 1;
+	protected static final int MENU_QUIT = MENU_RESET + 1;
 
 	private static WorldState currentState = WorldState.PLAYER_TURN;
 
@@ -154,6 +173,10 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 						// check if any players lost all of their checkers
 						// check if only one player remains or all players are
 						// dead
+
+						Debug.i(TAG, "Checking if the game is over");
+						playerWon();
+
 						currentState = WorldState.PLAYER_TURN;
 						currentPlayer = playerTurnCycle.nextTurn();
 						playTurn(currentPlayer);
@@ -174,7 +197,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		this.setOnSceneTouchListener(this);
 		this.setTouchAreaBindingOnActionDownEnabled(true);
-		
+
 	}
 
 	// ====================================================
@@ -198,8 +221,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			for (CheckerDef cDef : currentLevel.mP1Checkers) {
 				Checker c = addChecker(cDef.mX, cDef.mY, PlayerNo.P1, p1index++);
 				P1Checkers.add(c);
-				gameCheckers.add(c);
-
 			}
 			Debug.i(TAG, "P1Checkers has size " + P1Checkers.size());
 			playerTurnCycle = new PlayerTurnCycle(new Player(P1Checkers,
@@ -211,7 +232,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			for (CheckerDef cDef : currentLevel.mP2Checkers) {
 				Checker c = addChecker(cDef.mX, cDef.mY, PlayerNo.P2, p2index++);
 				P2Checkers.add(c);
-				gameCheckers.add(c);
 			}
 
 			playerTurnCycle.addPlayer(new Player(P2Checkers, PlayerNo.P2,
@@ -223,7 +243,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			for (CheckerDef cDef : currentLevel.mP3Checkers) {
 				Checker c = addChecker(cDef.mX, cDef.mY, PlayerNo.P3, p3index++);
 				P3Checkers.add(c);
-				gameCheckers.add(c);
 			}
 
 			playerTurnCycle.addPlayer(new Player(P3Checkers, PlayerNo.P3,
@@ -235,7 +254,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			for (CheckerDef cDef : currentLevel.mP4Checkers) {
 				Checker c = addChecker(cDef.mX, cDef.mY, PlayerNo.P4, p4index++);
 				P4Checkers.add(c);
-				gameCheckers.add(c);
 			}
 
 			playerTurnCycle.addPlayer(new Player(P4Checkers, PlayerNo.P4,
@@ -253,6 +271,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	private Checker addChecker(float x, float y, PlayerNo playerNo, int ID) {
 		Checker piece = CheckerFactory.getInstance().createPlayingPiece(x, y,
 				playerNo, ID);
+		playerLives[playerNo.getValue() - 1]++;
 		registerTouchArea(piece);
 		attachChild(piece);
 		gameCheckers.add(piece);
@@ -406,8 +425,9 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				// slowly zoom out
 				float currentZoomFactor = this.mSmoothCamera.getZoomFactor();
 				final float newZoomFactor = (float) (currentZoomFactor * 0.95);
-				
-				if (newZoomFactor < MAX_ZOOM_FACTOR && newZoomFactor > MIN_ZOOM_FACTOR) {
+
+				if (newZoomFactor < MAX_ZOOM_FACTOR
+						&& newZoomFactor > MIN_ZOOM_FACTOR) {
 					// Set the new zoom factor
 					this.mSmoothCamera.setZoomFactor(newZoomFactor);
 				}
@@ -449,11 +469,16 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		bodies = physicsWorld.getBodies();
 		while (bodies.hasNext()) {
 			Body body = bodies.next();
-			double velocityMagnitude = Math.sqrt(Math.pow(
-					body.getLinearVelocity().x, 2)
-					+ Math.pow(body.getLinearVelocity().y, 2));
-			if (velocityMagnitude > 0.01)
-				movingBodies = true;
+			if(body.getUserData() instanceof Checker) {
+				Checker c = (Checker) body.getUserData();
+				if(c.getState() == CheckerState.ALIVE) {
+					double velocityMagnitude = Math.sqrt(Math.pow(
+							body.getLinearVelocity().x, 2)
+							+ Math.pow(body.getLinearVelocity().y, 2));
+					if (velocityMagnitude > 0.01)
+						movingBodies = true;
+				}
+			}
 		}
 
 		if (movingBodies) {
@@ -584,6 +609,98 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		center.setVisible(false);
 	}
 
+	private boolean playerWon() {
+
+		for (int j = 0; j < playerLives.length; j++) {
+			playerLives[j] = 0;
+		}
+		for (Checker c : gameCheckers) {
+			if (c.getState() == CheckerState.ALIVE) {
+				playerLives[c.getPlayer().getValue() - 1]++;
+			}
+		}
+		Debug.i(TAG, playerLives[0] + " " + playerLives[1] + " "
+				+ playerLives[2] + " " + playerLives[3]);
+		int nPlayers = 0;
+		int playerIndex = 0;
+		for (int i = 0; i < playerLives.length; i++) {
+			if (playerLives[i] > 0) {
+				nPlayers++;
+				playerIndex = i + 1;
+			}
+		}
+
+		if (nPlayers == 1) {
+			Debug.i(TAG, "Current no of players " + nPlayers);
+			this.setChildScene(createMenuScene("Player " + playerIndex
+					+ " wins!"), false, true, true);
+			return true;
+		} else {
+			Debug.i(TAG, "Current no of players " + nPlayers);
+			return false;
+		}
+	}
+
+	public void removeChecker(Checker checker) {
+		gameCheckers.remove(checker);
+		if (playerTurnCycle.removeChecker(checker)) {
+			Debug.i(TAG, "Checker successfully removed from playerTurnCycle");
+		}
+	}
+
+	// ====================================================
+	// GAME OVER MENU
+	// ====================================================
+
+	@Override
+	public boolean onMenuItemClicked(final MenuScene pMenuScene,
+			final IMenuItem pMenuItem, final float pMenuItemLocalX,
+			final float pMenuItemLocalY) {
+		switch (pMenuItem.getID()) {
+		case MENU_RESET:
+			SceneManager.getInstance().showGameScene();
+			return true;
+		case MENU_QUIT:
+			/* End Activity. */
+			SceneManager.getInstance().showMenuScene();
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	protected MenuScene createMenuScene(String menuText) {
+		final MenuScene menuScene = new MenuScene(this.camera);
+
+		final IMenuItem gameOvertext = new ColorMenuItemDecorator(
+				new TextMenuItem(MENU_TEXT, res.mFont, menuText, vbom),
+				new Color(1, 0, 0), new Color(0, 0, 0));
+		gameOvertext.setBlendFunction(GLES20.GL_SRC_ALPHA,
+				GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		menuScene.addMenuItem(gameOvertext);
+
+		final IMenuItem resetMenuItem = new ColorMenuItemDecorator(
+				new TextMenuItem(MENU_RESET, res.mFont, "RESET", vbom),
+				new Color(1, 0, 0), new Color(0, 0, 0));
+		resetMenuItem.setBlendFunction(GLES20.GL_SRC_ALPHA,
+				GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		menuScene.addMenuItem(resetMenuItem);
+
+		final IMenuItem quitMenuItem = new ColorMenuItemDecorator(
+				new TextMenuItem(MENU_QUIT, res.mFont, "QUIT", vbom),
+				new Color(1, 0, 0), new Color(0, 0, 0));
+		quitMenuItem.setBlendFunction(GLES20.GL_SRC_ALPHA,
+				GLES20.GL_ONE_MINUS_SRC_ALPHA);
+		menuScene.addMenuItem(quitMenuItem);
+
+		menuScene.buildAnimations();
+
+		menuScene.setBackgroundEnabled(false);
+
+		menuScene.setOnMenuItemClickListener(this);
+		return menuScene;
+	}
+
 	// ====================================================
 	// INNER CLASSES
 	// ====================================================
@@ -608,12 +725,4 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		// TODO Auto-generated method stub
 		return INSTANCE;
 	}
-
-	public void removeChecker(Checker checker) {
-		gameCheckers.remove(checker);
-		if (playerTurnCycle.removeChecker(checker)) {
-			Debug.i(TAG, "Checker successfully removed from playerTurnCycle");
-		}
-	}
-
 }
