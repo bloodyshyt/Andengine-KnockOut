@@ -92,7 +92,9 @@ public class Utils {
 		Y1 = camCenterY - Y / 2;
 
 		if ((x > X1 && x < X1 + edge * X)
-				|| (x > X1 + (1 - edge) * X && x < X1 + X)) {
+				|| (x > X1 + (1 - edge) * X && x < X1 + X)
+				|| (y > Y1 && y < Y1 + edge * Y)
+				|| (y > Y1 + (1 - edge) * Y && y < Y1 + Y)) {
 			return true;
 		}
 		return false;
@@ -117,18 +119,18 @@ public class Utils {
 			copy.add(iter.next());
 		return copy;
 	}
-	
+
 	public static int randInt(int min, int max) {
 
-	    // NOTE: Usually this should be a field rather than a method
-	    // variable so that it is not re-seeded every call.
-	    Random rand = new Random();
+		// NOTE: Usually this should be a field rather than a method
+		// variable so that it is not re-seeded every call.
+		Random rand = new Random();
 
-	    // nextInt is normally exclusive of the top value,
-	    // so add 1 to make it inclusive
-	    int randomNum = rand.nextInt((max - min) + 1) + min;
+		// nextInt is normally exclusive of the top value,
+		// so add 1 to make it inclusive
+		int randomNum = rand.nextInt((max - min) + 1) + min;
 
-	    return randomNum;
+		return randomNum;
 	}
 
 }

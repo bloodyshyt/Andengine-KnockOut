@@ -110,8 +110,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	public static Rectangle center;
 
 	// Variables for zoom/smooth camera
-	private static final float MIN_ZOOM_FACTOR = 0.5f;
-	private static final float MAX_ZOOM_FACTOR = 1.5f;
+	private static final float MIN_ZOOM_FACTOR = 0.8f;
+	private static final float MAX_ZOOM_FACTOR = 1.2f;
 	private SurfaceScrollDetector mScrollDetector;
 	private PinchZoomDetector mPinchZoomDetector;
 	private float mPinchZoomStartedCameraZoomFactor;
@@ -147,7 +147,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		// set the background as white
 		setBackground(new Background(Color.WHITE));
 
-		loadLevel(1);
+		loadLevel(3, 1);
 
 		registerUpdateHandler(physicsWorld);
 
@@ -203,7 +203,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// ====================================================
 	// LEVEL LOADING
 	// ====================================================
-	private void loadLevel(final int pLevelIndex) {
+	private void loadLevel(final int pWorldIndex, final int pLevelIndex) {
 
 		int p1index, p2index, p3index, p4index;
 
@@ -213,7 +213,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		p4index = 401;
 
 		// get LevelDef object
-		LevelDef currentLevel = Levels.getLevelDef(pLevelIndex);
+		LevelDef currentLevel = Levels.getLevelDef(pWorldIndex, pLevelIndex);
 
 		// load player checkers
 		if (currentLevel.mP1Checkers != null) {
@@ -424,7 +424,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			if (Utils.isFingerAtEdgeofScreen(pSceneTouchEvent, mSmoothCamera)) {
 				// slowly zoom out
 				float currentZoomFactor = this.mSmoothCamera.getZoomFactor();
-				final float newZoomFactor = (float) (currentZoomFactor * 0.95);
+				final float newZoomFactor = (float) (currentZoomFactor * 0.99);
 
 				if (newZoomFactor < MAX_ZOOM_FACTOR
 						&& newZoomFactor > MIN_ZOOM_FACTOR) {

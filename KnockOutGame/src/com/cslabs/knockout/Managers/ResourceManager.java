@@ -56,6 +56,8 @@ public class ResourceManager {
 	public ITiledTextureRegion playerIconTextureRegion;
 	public ITextureRegion leftArrowTextureRegion;
 	public ITextureRegion rightArrowTextureRegion;
+	public ITextureRegion crossButtonTextureRegion;
+	public ITextureRegion playButtonTextureRegion;
 
 	// game font used
 	public Font mFont;
@@ -155,6 +157,13 @@ public class ResourceManager {
 				.createFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
 						"right_arrow.png");
 		
+		crossButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
+						"cross_button.png");
+		
+		playButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(playerSelectionTextureAtlas, activity.getAssets(),
+						"play_button.png");
 		try {
 			playerSelectionTextureAtlas
 					.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(
