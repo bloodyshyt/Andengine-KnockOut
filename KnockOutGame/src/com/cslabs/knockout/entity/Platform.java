@@ -27,7 +27,6 @@ public class Platform extends Mesh implements CollidableEntity {
 		vertexCount = pVertexCount;
 		pVertices = Utils
 				.arrayToVector2withMeterConv(platform_cords);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

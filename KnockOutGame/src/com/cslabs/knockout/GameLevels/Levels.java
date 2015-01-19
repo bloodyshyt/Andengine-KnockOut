@@ -1,5 +1,7 @@
 package com.cslabs.knockout.GameLevels;
 
+import java.util.ArrayList;
+
 import com.cslabs.knockout.entity.PlayerNo;
 
 /**
@@ -66,6 +68,15 @@ public class Levels {
 		}
 		return null;
 	}
+	
+	public static final LevelDef[] getLevelDefofWorld(final int pWorldIndex) {
+		ArrayList<LevelDef> levels = new ArrayList<Levels.LevelDef>();
+		for (LevelDef curLevelDef : AvailableLevels) 
+			if(curLevelDef.mWorldIndex == pWorldIndex) levels.add(curLevelDef);
+		LevelDef[] a = new LevelDef[levels.size()];
+		a = levels.toArray(a);
+		return a;
+	}
 
 	// ====================================================
 	// CLASSES
@@ -78,7 +89,7 @@ public class Levels {
 		public final CheckerDef[] mP3Checkers;
 		public final CheckerDef[] mP4Checkers;
 
-		public LevelDef(final int pLevelIndex, final int pWorldIndex,
+		public LevelDef(final int pWorldIndex, final int pLevelIndex,
 				PlatformDef platformDef, CheckerDef[] P1, CheckerDef[] P2,
 				CheckerDef[] P3, CheckerDef[] P4) {
 			mLevelIndex = pLevelIndex;

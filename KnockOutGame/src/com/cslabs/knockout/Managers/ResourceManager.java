@@ -58,6 +58,7 @@ public class ResourceManager {
 	public ITextureRegion rightArrowTextureRegion;
 	public ITextureRegion crossButtonTextureRegion;
 	public ITextureRegion playButtonTextureRegion;
+	
 
 	// game font used
 	public Font mFont;
@@ -178,6 +179,7 @@ public class ResourceManager {
 	public void unloadPlayerSelectionGraphics() {
 		playerSelectionTextureAtlas.unload();
 	}
+	
 
 	public void loadGameAudio() {
 		// NOTHING DOING HERE

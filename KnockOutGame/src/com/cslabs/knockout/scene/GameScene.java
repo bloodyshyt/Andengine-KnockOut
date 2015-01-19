@@ -35,6 +35,7 @@ import android.view.KeyEvent;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.cslabs.knockout.GameActivity;
 import com.cslabs.knockout.AI.AIBotWrapper;
 import com.cslabs.knockout.AI.Shot;
 import com.cslabs.knockout.AI.TestPhysicsWorld;
@@ -89,13 +90,15 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	 * AIBotTypes.GREEDYBOT), new AIBotWrapper(2 , 5, AIBotTypes.MINIMAX), null,
 	 * null };
 	 */
-	public static AIBotWrapper[] botWrappers = { null, null, null, null };
+	public static AIBotWrapper[] botWrappers;
 	/*
 	 * public static AIBotWrapper[] botWrappers = { new AIBotWrapper(0, 5,
 	 * AIBotTypes.GREEDYBOT), new AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), new
 	 * AIBotWrapper(0, 5, AIBotTypes.GREEDYBOT), null };
 	 */
 	Iterator<Body> bodies;
+	
+	private static LevelDef cLevelDef;
 
 	// Variables for platform
 	public static Platform platform;
@@ -137,17 +140,33 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		mSmoothCamera = (SmoothCamera) ResourceManager.getInstance().camera;
 
 	}
+	
+	public GameScene(LevelDef pLevelDef, AIBotWrapper[] pBots) {
+		super();
+		cLevelDef = pLevelDef;
+		botWrappers = pBots;
+		physicsWorld = new FixedStepPhysicsWorld(60, 1, new Vector2(0, 0),
+				false, 6, 2);
+		CheckerFactory.getInstance().create(physicsWorld, vbom);
+		PlatformFactory.getInstance().create(physicsWorld, vbom);
+		mSmoothCamera = (SmoothCamera) ResourceManager.getInstance().camera;
+
+	}
 
 	// ====================================================
 	// ABSTRACT SCENE OVERRIDEN METHODS
 	// ====================================================
 	@Override
 	public void populate() {
+		// center the camera
+		camera.setCenter(GameActivity.CAMERA_WIDTH/2, GameActivity.CAMERA_HEIGHT/2);
 
 		// set the background as white
 		setBackground(new Background(Color.WHITE));
 
-		loadLevel(3, 1);
+		//loadLevel(1, 3);
+		loadLevel(cLevelDef);
+		
 
 		registerUpdateHandler(physicsWorld);
 
@@ -203,8 +222,8 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// ====================================================
 	// LEVEL LOADING
 	// ====================================================
-	private void loadLevel(final int pWorldIndex, final int pLevelIndex) {
-
+	//private void loadLevel(final int pWorldIndex, final int pLevelIndex) {
+	private void loadLevel(LevelDef pLevelDef) {
 		int p1index, p2index, p3index, p4index;
 
 		p1index = 101;
@@ -213,7 +232,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		p4index = 401;
 
 		// get LevelDef object
-		LevelDef currentLevel = Levels.getLevelDef(pWorldIndex, pLevelIndex);
+		LevelDef currentLevel = pLevelDef;
 
 		// load player checkers
 		if (currentLevel.mP1Checkers != null) {

@@ -1,14 +1,15 @@
 package com.cslabs.knockout.Managers;
 
-import java.io.IOException;
-
 import org.andengine.util.debug.Debug;
 
 import android.app.Activity;
 import android.os.AsyncTask;
 
+import com.cslabs.knockout.AI.AIBotWrapper;
+import com.cslabs.knockout.GameLevels.Levels.LevelDef;
 import com.cslabs.knockout.scene.AbstractScene;
 import com.cslabs.knockout.scene.GameScene;
+import com.cslabs.knockout.scene.LevelMenuScollerScene;
 import com.cslabs.knockout.scene.LoadingScene;
 import com.cslabs.knockout.scene.MenuSceneWrapper;
 import com.cslabs.knockout.scene.PlayerSelectionMenu;
@@ -97,7 +98,7 @@ public class SceneManager {
 
 	}
 	
-	public void showPlayerSelectionScene() {
+	public void showPlayerSelectionScene(final LevelDef pLevelDef) {
 		final AbstractScene previousScene = getCurrentScene();
 		setCurrentScene(loadingScene);
 		
@@ -106,9 +107,29 @@ public class SceneManager {
 			@Override
 			protected Void doInBackground(Void... params) {
 				res.loadPlayerSelectionGraphics();
-				PlayerSelectionMenu playerSelectionMenu = new PlayerSelectionMenu();
+				PlayerSelectionMenu playerSelectionMenu = new PlayerSelectionMenu(pLevelDef);
 				playerSelectionMenu.populate();
 				setCurrentScene(playerSelectionMenu);
+				previousScene.destroy();
+				return null;
+			}
+			
+		}.execute();
+		
+	}
+	
+	public void showLevelSelectionScene() {
+		final AbstractScene previousScene = getCurrentScene();
+		setCurrentScene(loadingScene);
+		
+		new AsyncTask<Void, Void, Void>() {
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				res.loadPlayerSelectionGraphics();
+				LevelMenuScollerScene levelSelectionMenu = new LevelMenuScollerScene();
+				levelSelectionMenu.populate();
+				setCurrentScene(levelSelectionMenu);
 				previousScene.destroy();
 				return null;
 			}
@@ -130,6 +151,27 @@ public class SceneManager {
 					Debug.e("Interrupted", e);
 				}
 				GameScene gameScene = new GameScene();
+				gameScene.populate();
+				previousScene.destroy();
+
+				setCurrentScene(gameScene);
+			}
+		});
+	}
+	
+	public void showGameScene(final LevelDef pLevelDef, final AIBotWrapper[] pBots) {
+		final AbstractScene previousScene = getCurrentScene();
+		setCurrentScene(loadingScene);
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					Debug.e("Interrupted", e);
+				}
+				GameScene gameScene = new GameScene(pLevelDef, pBots);
 				gameScene.populate();
 				previousScene.destroy();
 

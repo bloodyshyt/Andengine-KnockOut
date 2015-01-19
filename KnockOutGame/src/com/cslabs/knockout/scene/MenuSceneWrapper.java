@@ -56,11 +56,11 @@ public class MenuSceneWrapper extends AbstractScene implements
 			float pMenuItemLocalX, float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 		case 0: 
-			SceneManager.getInstance().showGameScene();
+			SceneManager.getInstance().showLevelSelectionScene();
 			return true;
 		case 1:
 			// options
-			SceneManager.getInstance().showPlayerSelectionScene();
+			//SceneManager.getInstance().showPlayerSelectionScene();
 			return true;
 		case 2: 
 			// help
