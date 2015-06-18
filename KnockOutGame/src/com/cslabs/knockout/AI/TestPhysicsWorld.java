@@ -32,7 +32,7 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 
 	private static final String TAG = "TestPhysicsWorld";
 
-	Platform platform;
+	Platform platform; 
 	ArrayList<VirtualChecker> gameVirtualCheckers = new ArrayList<VirtualChecker>();
 
 	private VirtualGameState defaultState;
@@ -244,12 +244,12 @@ public class TestPhysicsWorld extends FixedStepPhysicsWorld {
 		body.setLinearVelocity(shot.getVelocity());
 
 		// step the world forward
-		World mWorld = this.getmWorld();
+		World mWorld = this.getWorld();
 		for (int i = 0; i <= 200; i++) {
 			mWorld.step(1.0f / 60.0f, 10, 8);
 			mWorld.clearForces();
 		}
-
+ 
 		// update the isAlive status of virtual checkers
 		this.updateVirtualCheckerState();
 

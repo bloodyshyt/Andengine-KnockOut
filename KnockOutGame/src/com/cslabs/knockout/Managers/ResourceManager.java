@@ -209,6 +209,7 @@ public class ResourceManager {
 
 	public void loadSplashGraphics() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		
 		splashTextureAtlas = new BitmapTextureAtlas(
 				activity.getTextureManager(), 256, 256,
 				BitmapTextureFormat.RGBA_8888,

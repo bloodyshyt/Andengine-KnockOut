@@ -164,7 +164,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		// set the background as white
 		setBackground(new Background(Color.WHITE));
 
-		//loadLevel(1, 3);
 		loadLevel(cLevelDef);
 		
 

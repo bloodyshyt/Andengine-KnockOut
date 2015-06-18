@@ -9,10 +9,8 @@ import com.cslabs.knockout.AI.AIBotWrapper;
 import com.cslabs.knockout.GameLevels.Levels.LevelDef;
 import com.cslabs.knockout.scene.AbstractScene;
 import com.cslabs.knockout.scene.GameScene;
-import com.cslabs.knockout.scene.LevelMenuScollerScene;
 import com.cslabs.knockout.scene.LoadingScene;
 import com.cslabs.knockout.scene.MenuSceneWrapper;
-import com.cslabs.knockout.scene.PlayerSelectionMenu;
 import com.cslabs.knockout.scene.SplashScene;
 
 public class SceneManager {
@@ -96,46 +94,6 @@ public class SceneManager {
 
 		}.execute();
 
-	}
-	
-	public void showPlayerSelectionScene(final LevelDef pLevelDef) {
-		final AbstractScene previousScene = getCurrentScene();
-		setCurrentScene(loadingScene);
-		
-		new AsyncTask<Void, Void, Void>() {
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				res.loadPlayerSelectionGraphics();
-				PlayerSelectionMenu playerSelectionMenu = new PlayerSelectionMenu(pLevelDef);
-				playerSelectionMenu.populate();
-				setCurrentScene(playerSelectionMenu);
-				previousScene.destroy();
-				return null;
-			}
-			
-		}.execute();
-		
-	}
-	
-	public void showLevelSelectionScene() {
-		final AbstractScene previousScene = getCurrentScene();
-		setCurrentScene(loadingScene);
-		
-		new AsyncTask<Void, Void, Void>() {
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				res.loadPlayerSelectionGraphics();
-				LevelMenuScollerScene levelSelectionMenu = new LevelMenuScollerScene();
-				levelSelectionMenu.populate();
-				setCurrentScene(levelSelectionMenu);
-				previousScene.destroy();
-				return null;
-			}
-			
-		}.execute();
-		
 	}
 
 	public void showGameScene() {
