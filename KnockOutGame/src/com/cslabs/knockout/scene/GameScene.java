@@ -48,6 +48,7 @@ import com.cslabs.knockout.Managers.ResourceManager;
 import com.cslabs.knockout.Managers.SceneManager;
 import com.cslabs.knockout.entity.Checker;
 import com.cslabs.knockout.entity.CheckerState;
+import com.cslabs.knockout.entity.Cycle;
 import com.cslabs.knockout.entity.Platform;
 import com.cslabs.knockout.entity.Player;
 import com.cslabs.knockout.entity.PlayerNo;
@@ -75,13 +76,22 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// ====================================================
 	private static final int CAMERA_HEIGHT = 800;
 	private static final int CAMERA_WIDTH = 480;
-
+	
+	// Variables for zoom/smooth camera
+	private static final float MIN_ZOOM_FACTOR = 0.8f;
+	private static final float MAX_ZOOM_FACTOR = 1.2f;
+	
+	// game over pop up menu
+	protected static final int MENU_TEXT = 0;
+	protected static final int MENU_RESET = MENU_TEXT + 1;
+	protected static final int MENU_QUIT = MENU_RESET + 1;
+	
 	// ====================================================
 	// VARIABLES
 	// ====================================================
 	public FixedStepPhysicsWorld physicsWorld;
 
-	private static PlayerTurnCycle playerTurnCycle;
+	private static Cycle playerTurnCycle;
 	private Player currentPlayer;
 	public volatile ArrayList<Checker> gameCheckers = new ArrayList<Checker>();
 
@@ -113,8 +123,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	public static Rectangle center;
 
 	// Variables for zoom/smooth camera
-	private static final float MIN_ZOOM_FACTOR = 0.8f;
-	private static final float MAX_ZOOM_FACTOR = 1.2f;
 	private SurfaceScrollDetector mScrollDetector;
 	private PinchZoomDetector mPinchZoomDetector;
 	private float mPinchZoomStartedCameraZoomFactor;
@@ -124,10 +132,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	//private MenuScene mMenuScene;
 	private static volatile int[] playerLives = new int[4];
 
-	// game over pop up menu
-	protected static final int MENU_TEXT = 0;
-	protected static final int MENU_RESET = MENU_TEXT + 1;
-	protected static final int MENU_QUIT = MENU_RESET + 1;
 
 	private static WorldState currentState = WorldState.PLAYER_TURN;
 
@@ -170,41 +174,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		registerUpdateHandler(physicsWorld);
 
 		// update handler to check if all the pieces are stationary
-		registerUpdateHandler(new IUpdateHandler() {
-
-			@Override
-			public void reset() {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void onUpdate(float pSecondsElapsed) {
-
-				if (firstTurn) {
-					playTurn(currentPlayer);
-					firstTurn = false;
-				}
-
-				if (currentState == WorldState.STATE_FIRING) {
-					if (!isWorldMoving()) {
-						// check if any players lost all of their checkers
-						// check if only one player remains or all players are
-						// dead
-
-						Debug.i(TAG, "Checking if the game is over");
-						playerWon();
-
-						currentState = WorldState.PLAYER_TURN;
-						currentPlayer = playerTurnCycle.nextTurn();
-						playTurn(currentPlayer);
-
-					}
-				} else {
-
-				}
-			}
-		});
+		registerUpdateHandler(IMovementDetector);
 
 		setTouchAreaBindingOnActionDownEnabled(true);
 		createVisualAids();
@@ -241,7 +211,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				P1Checkers.add(c);
 			}
 			Debug.i(TAG, "P1Checkers has size " + P1Checkers.size());
-			playerTurnCycle = new PlayerTurnCycle(new Player(P1Checkers,
+			playerTurnCycle = new Cycle(new Player(P1Checkers,
 					PlayerNo.P1, botWrappers[0]));
 		}
 
@@ -278,8 +248,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 					botWrappers[3]));
 		}
 
-		playerTurnCycle.closeCycle();
-		currentPlayer = playerTurnCycle.getHead();
+		currentPlayer = playerTurnCycle.getHeadPlayer();
 
 		// load platform
 		PlatformDef currPlatform = currentLevel.mPlatformDef;
@@ -403,11 +372,11 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			ITouchArea pTouchArea, float pTouchAreaLocalX,
 			float pTouchAreaLocalY) {
 
-		// check if current player is CPU or checkers are moving
+		// skip if current player is CPU or checkers are moving
 		if (currentPlayer.isCPU || currentState == WorldState.STATE_FIRING)
 			return true;
 
-		// check if pTouchArea is checker and belongs to currentPlayer
+		// skip if pTouchArea is checker and belongs to currentPlayer
 		if (!(pTouchArea instanceof Checker))
 			return true;
 		else if (((Checker) pTouchArea).getPlayer() != currentPlayer.playerNo)
@@ -437,8 +406,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 			distance = Utils.calculateDistance(x1, y1, x2, y2);
 			float pullBackAngle = MathUtils.atan2(y2 - y1, x2 - x1);
 			degree = (float) (pullBackAngle + Math.PI);
-			// Debug.i(TAG, "pullBackAngle is " + pullBackAngle
-			// + " firing degree is " + degree);
+
 			if (Utils.isFingerAtEdgeofScreen(pSceneTouchEvent, mSmoothCamera)) {
 				// slowly zoom out
 				float currentZoomFactor = this.mSmoothCamera.getZoomFactor();
@@ -454,8 +422,6 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 
 		if (pSceneTouchEvent.isActionUp()) {
 
-			// Shot shot = new Shot(c.getID(), distance, degree);
-			// shot.dumpInfo();
 			double power = Utils.MAX_POWER * distance / Utils.FIRING_RADIUS;
 			Vector2 v = new Vector2((float) (Math.cos(degree) * power),
 					(float) (Math.sin(degree) * power));
@@ -743,4 +709,42 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 		// TODO Auto-generated method stub
 		return INSTANCE;
 	}
+	
+	
+	private IUpdateHandler IMovementDetector = new IUpdateHandler() {
+
+			@Override
+			public void reset() {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onUpdate(float pSecondsElapsed) {
+
+				if (firstTurn) {
+					playTurn(currentPlayer);
+					firstTurn = false;
+				}
+
+				if (currentState == WorldState.STATE_FIRING) {
+					if (!isWorldMoving()) {
+						// check if any players lost all of their checkers
+						// check if only one player remains or all players are
+						// dead
+
+						Debug.i(TAG, "Checking if the game is over");
+						playerWon();
+
+						currentState = WorldState.PLAYER_TURN;
+						currentPlayer = playerTurnCycle.getNextPlayer();
+						playTurn(currentPlayer);
+
+					}
+				} else {
+
+				}
+			}
+	};
+		
 }
