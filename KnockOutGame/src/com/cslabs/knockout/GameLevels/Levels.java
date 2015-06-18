@@ -15,7 +15,7 @@ public class Levels {
 	// CONSTANTS
 	// ====================================================
 
-	private static final LevelDef[] AvailableLevels = new LevelDef[] {
+	public static final LevelDef[] AvailableLevels = new LevelDef[] {
 			new LevelDef(1, 1, new PlatformDef(new float[] { 80, 100, 0, 400,
 					100, 0, 400, 700, 0, 80, 700, 0 }), new CheckerDef[] {
 					new CheckerDef(140, 600, PlayerNo.P1),

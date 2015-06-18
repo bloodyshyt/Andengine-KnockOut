@@ -2,7 +2,7 @@ package com.cslabs.knockout.entity;
 
 import java.util.LinkedList;
 
-public class Cycle extends LinkedList<Player> {
+public class PlayerCycle extends LinkedList<Player> {
 
 	private static final String TAG = "PlayerCycle";
 
@@ -13,7 +13,7 @@ public class Cycle extends LinkedList<Player> {
 	private final Player mHead;
 	private int index;
 
-	public Cycle(Player pHead) {
+	public PlayerCycle(Player pHead) {
 		mCurPlayer = pHead;
 		mHead = pHead;
 		index = 0;

@@ -8,6 +8,8 @@ import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.util.adt.color.Color;
 
+import com.cslabs.knockout.AI.AIBotWrapper;
+import com.cslabs.knockout.GameLevels.Levels;
 import com.cslabs.knockout.Managers.SceneManager;
 
 public class MenuSceneWrapper extends AbstractScene implements
@@ -56,7 +58,8 @@ public class MenuSceneWrapper extends AbstractScene implements
 			float pMenuItemLocalX, float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 		case 0: 
-			SceneManager.getInstance().showLevelSelectionScene();
+			//SceneManager.getInstance().showLevelSelectionScene();
+			SceneManager.getInstance().showGameScene(Levels.getLevelDef(1, 1), new AIBotWrapper[] {null, null});
 			return true;
 		case 1:
 			// options

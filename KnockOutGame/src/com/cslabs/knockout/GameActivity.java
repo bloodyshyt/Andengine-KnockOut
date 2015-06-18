@@ -15,6 +15,8 @@ import org.andengine.util.debug.Debug;
 
 import android.view.KeyEvent;
 
+import com.cslabs.knockout.AI.AIBotWrapper;
+import com.cslabs.knockout.GameLevels.Levels;
 import com.cslabs.knockout.Managers.ResourceManager;
 import com.cslabs.knockout.Managers.SceneManager;
 
@@ -83,8 +85,10 @@ public class GameActivity extends BaseGameActivity {
 		 * Insert test code here
 		 * 
 		 * */
+		SceneManager.getInstance().showGameScene();
 		
-		SceneManager.getInstance().showSplashAndMenuScene();
+		
+		//SceneManager.getInstance().showSplashAndMenuScene();
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
 	

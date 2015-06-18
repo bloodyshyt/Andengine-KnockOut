@@ -48,7 +48,7 @@ import com.cslabs.knockout.Managers.ResourceManager;
 import com.cslabs.knockout.Managers.SceneManager;
 import com.cslabs.knockout.entity.Checker;
 import com.cslabs.knockout.entity.CheckerState;
-import com.cslabs.knockout.entity.Cycle;
+import com.cslabs.knockout.entity.PlayerCycle;
 import com.cslabs.knockout.entity.Platform;
 import com.cslabs.knockout.entity.Player;
 import com.cslabs.knockout.entity.PlayerNo;
@@ -91,7 +91,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 	// ====================================================
 	public FixedStepPhysicsWorld physicsWorld;
 
-	private static Cycle playerTurnCycle;
+	private static PlayerCycle playerTurnCycle;
 	private Player currentPlayer;
 	public volatile ArrayList<Checker> gameCheckers = new ArrayList<Checker>();
 
@@ -211,7 +211,7 @@ public class GameScene extends AbstractScene implements IOnAreaTouchListener,
 				P1Checkers.add(c);
 			}
 			Debug.i(TAG, "P1Checkers has size " + P1Checkers.size());
-			playerTurnCycle = new Cycle(new Player(P1Checkers,
+			playerTurnCycle = new PlayerCycle(new Player(P1Checkers,
 					PlayerNo.P1, botWrappers[0]));
 		}
 
