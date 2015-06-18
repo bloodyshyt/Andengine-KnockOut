@@ -92,7 +92,7 @@ public class MiniMaxBot extends AbstractAIBot {
 
 		if(lives[0] == 0) return (currentPlayer == maxPlayer) ? Float.MIN_VALUE : Float.MAX_VALUE;
 		if (depth == 1)
-			return evaluate(world, currentState, currentPlayer);
+			return evaluate(world, currentState, maxPlayer);
 
 		float max = Float.MIN_VALUE, min = Float.MAX_VALUE;
 
