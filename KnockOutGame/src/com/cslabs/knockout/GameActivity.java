@@ -78,6 +78,12 @@ public class GameActivity extends BaseGameActivity {
 			throws IOException {
 
 		//SceneManager.getInstance().showGameScene();
+		
+		/*
+		 * Insert test code here
+		 * 
+		 * */
+		
 		SceneManager.getInstance().showSplashAndMenuScene();
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
